@@ -1,0 +1,51 @@
+---
+title: "Frequently Asked Questions About Aether"
+sidebarTitle: "FAQ"
+description: "Answers to common questions about Aether's compatibility, privacy, LLM providers, Alpine Linux runtime, and the extension system."
+---
+
+Find answers to the most common questions about setting up and using Aether. If your question isn't covered here, check the [Troubleshooting](/help/troubleshooting) page or open an issue on GitHub.
+
+<AccordionGroup>
+
+  <Accordion title="What Android version does Aether require?">
+    Aether requires **Android 13 or higher** (minimum SDK 26) and runs on **arm64-v8a** (64-bit ARM) devices only. It will not install on x86 tablets, emulators, or 32-bit ARM devices.
+  </Accordion>
+
+  <Accordion title="Does Aether cost anything?">
+    Aether itself is **free and open-source** under the GPL-3.0 license. You only pay for the LLM API usage charged directly by your chosen provider (OpenAI, Anthropic, etc.). Aether does not add any fees or markups.
+  </Accordion>
+
+  <Accordion title="Are my API keys safe?">
+    Yes. API keys are stored in **Aether's private app storage** on your device and sent only to the respective provider's API endpoint when you make a request. Aether has no servers of its own and never receives or logs your keys.
+  </Accordion>
+
+  <Accordion title="Can I use Aether offline?">
+    The AI chat features require an internet connection to reach LLM provider APIs — the models themselves run in the cloud. However, the **Alpine Linux runtime and shell tools** work fully offline once the environment has been initialized, so you can run local scripts and commands without a connection.
+  </Accordion>
+
+  <Accordion title="What is the Alpine Linux VM?">
+    Aether ships with an **Alpine Linux arm64 root filesystem** that runs via `proot` — a user-space tool that emulates a Linux environment without requiring root access. This gives the AI agent a real Linux shell where it can execute commands, install packages with `apk`, and use standard UNIX tools to complete tasks.
+  </Accordion>
+
+  <Accordion title="Does Aether require root?">
+    No. Root access is **never required**. For privileged device operations, Aether optionally integrates with **Shizuku**, which uses Android's ADB (Wireless Debugging) interface to grant elevated permissions without rooting your device. Shizuku itself is entirely optional.
+  </Accordion>
+
+  <Accordion title="Can I use Aether without Termux or Shizuku?">
+    Yes. Both Termux and Shizuku are **optional integrations**. The built-in Alpine Linux runtime handles the vast majority of shell-tool use cases — file manipulation, scripting, package installs — without any additional apps. Install Termux or Shizuku only if you need deeper device automation capabilities.
+  </Accordion>
+
+  <Accordion title="What is an Extension / Mod?">
+    Extensions are packages that add new tools, UI surfaces, or application behaviors to Aether. They can be **TypeScript scripts** (interpreted at runtime by the Pi framework) or **compiled Kotlin/DEX native mods** (injected directly into the app as a Compose or WebView UI layer). A single extension package can extend the Pi agent and inject native UI into Aether at the same time. See the Extension Developer documentation for details on building your own.
+  </Accordion>
+
+  <Accordion title="Where is my chat history stored?">
+    Chat history is stored in a **local Room database** inside Aether's private app storage on your device. It is never synced to any server, cloud service, or Aether infrastructure. Your conversations stay on your device.
+  </Accordion>
+
+  <Accordion title="How do I update Aether?">
+    Download the latest APK from the [GitHub Releases page](https://github.com/Zhou-Shilin/Aether/releases) (or grab a nightly build from Nightly Link) and install it over your existing version. Android will perform an in-place upgrade that preserves all your data, settings, and chat history.
+  </Accordion>
+
+</AccordionGroup>

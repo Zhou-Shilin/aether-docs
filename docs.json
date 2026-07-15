@@ -1,72 +1,119 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mintlify Starter Kit",
+  "name": "Aether Baimoqilin",
+  "theme": "almond",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
-  },
-  "favicon": "/favicon.svg",
-  "navigation": {
-    "pages": [
-      {
-        "group": "Getting Started",
-        "pages": [
-          "index",
-          "quickstart"
-        ]
-      }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
+    "primary": "#fc48a1",
+    "light": "#fc80c2"
   },
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "https://media.brand.dev/3bf4c031-f4e8-429c-aed2-d40bcb1b120a.svg",
+    "dark": "https://media.brand.dev/3bf4c031-f4e8-429c-aed2-d40bcb1b120a.svg"
   },
-  "navbar": {
-    "links": [
+  "favicon": "https://media.brand.dev/106187a1-4c5d-40b9-94c8-009813a7f740.png",
+  "navigation": {
+    "tabs": [
       {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "tab": "User Guide",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/models-providers",
+              "features/agent-mode",
+              "features/skills-mcp",
+              "features/alpine-runtime",
+              "features/termux-shizuku"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/settings",
+              "configuration/providers",
+              "configuration/scheduled-tasks"
+            ]
+          },
+          {
+            "group": "Help",
+            "pages": [
+              "help/faq",
+              "help/troubleshooting"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Extension Developer",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "extensions/overview",
+              "extensions/package-format",
+              "extensions/quickstart"
+            ]
+          },
+          {
+            "group": "Script Mod API",
+            "pages": [
+              "extensions/api/surfaces",
+              "extensions/api/components",
+              "extensions/api/pages",
+              "extensions/api/state",
+              "extensions/api/services",
+              "extensions/api/events-intercept",
+              "extensions/api/storage",
+              "extensions/api/host-methods"
+            ]
+          },
+          {
+            "group": "UI Reference",
+            "pages": [
+              "extensions/ui/declarative-ui",
+              "extensions/ui/webview"
+            ]
+          },
+          {
+            "group": "Native Mods",
+            "pages": [
+              "extensions/native/overview",
+              "extensions/native/services",
+              "extensions/native/interceptors",
+              "extensions/native/compose",
+              "extensions/native/safe-mode"
+            ]
+          },
+          {
+            "group": "Pi Extensions",
+            "pages": [
+              "extensions/pi/overview",
+              "extensions/pi/tools-commands"
+            ]
+          },
+          {
+            "group": "Examples",
+            "pages": [
+              "extensions/examples/combined-extension",
+              "extensions/examples/global-skills-mod"
+            ]
+          }
+        ]
       }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://app.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-      "copy",
-      "view",
-      "chatgpt",
-      "claude",
-      "perplexity",
-      "mcp",
-      "cursor",
-      "vscode"
     ]
   },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/Zhou-Shilin/Aether"
     }
   }
 }

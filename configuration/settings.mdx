@@ -1,0 +1,43 @@
+---
+title: "Aether Settings: Customize Your AI Agent Experience"
+sidebarTitle: "Settings"
+description: "Explore Aether's settings to configure models, providers, appearance, agent behavior, and extension management all from one place."
+---
+
+Aether's settings screen is your control center for every aspect of the app's behavior — from which LLM provider powers your chats, to how the agent thinks, to which extensions are loaded. Everything you need to tailor Aether to your workflow lives in one place.
+
+## Accessing Settings
+
+Tap the **gear icon** (⚙️) in the top-right corner of the chat screen to open the Settings panel. Settings are organized into clearly labeled sections so you can find what you need quickly.
+
+## Settings Sections
+
+### Providers
+
+Add, edit, and remove your LLM provider credentials here. Each provider entry stores an API key and any additional configuration required to connect Aether to that service. For a full walkthrough of adding and managing providers, see the [Providers](/configuration/providers) page.
+
+### Model
+
+Choose the default model used for all new chat sessions. Tap the model name to open a picker showing every model available across your configured providers. Individual chats can override this default directly from the composer's model selector, so your global setting is just the starting point.
+
+### Agent Mode
+
+Toggle **Agent Mode** on or off as the global default for new conversations. When Agent Mode is enabled, Aether uses a tool-calling loop that lets the AI execute shell commands, read files, and call Skills automatically. You can also configure the **reasoning effort** level here for models that expose this setting (such as OpenAI's o-series), ranging from low to high.
+
+### Extensions
+
+Browse every extension currently installed in Aether, install new extensions from a `.zip` archive or an npm package name, and review any extension errors logged at load time. You can also manage **Native Mod Safe Mode** from this section — if a compiled Kotlin/DEX mod is causing crashes, Safe Mode lets you disable it without losing your other extensions.
+
+### Skills / MCP
+
+Manage your installed **Skills** — discrete tool packages that give the agent new capabilities — and configure **MCP (Model Context Protocol) server** connections. Adding an MCP server exposes its full tool surface to the agent during any session where that skill is active.
+
+### Scheduled Tasks
+
+Set up recurring agent workflows that run automatically at specified times without any manual input. Configure schedules, prompts, models, and the Skills each task should use. For full details, see the [Scheduled Tasks](/configuration/scheduled-tasks) page.
+
+---
+
+<Tip>
+  Changes to provider credentials and model selection take effect immediately — no restart required.
+</Tip>

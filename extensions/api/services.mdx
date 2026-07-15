@@ -1,0 +1,86 @@
+---
+title: "Service Registry: Discover and Override Aether's Core Services"
+sidebarTitle: "Services"
+description: "Use the services API to list, describe, and invoke Aether's built-in services — and override them with higher-priority implementations from your extension."
+---
+
+Aether exposes a discoverable service registry that your extension can query and call at runtime. You can invoke built-in services such as `skills` directly from any extension, and — when writing a Native Mod — register higher-priority implementations that replace the defaults entirely.
+
+## API reference
+
+```typescript
+readonly services: {
+  list(): Promise<object>;
+  describe(service: string): Promise<object>;
+  invoke(service: string, method: string, args?: object): Promise<object>;
+};
+```
+
+## Listing available services
+
+Call `services.list()` to retrieve the full catalog of registered services:
+
+```typescript
+const catalog = await aether.services.list();
+```
+
+## Describing a service
+
+Call `services.describe()` with a service ID to inspect its available methods and metadata:
+
+```typescript
+const skillsApi = await aether.services.describe("skills");
+```
+
+## Built-in services
+
+### `skills` service
+
+The `skills` service exposes Aether's native Skill selection state.
+
+| Method | Arguments | Description |
+|---|---|---|
+| `list` | — | Returns all installed Skills |
+| `getSelection` | — | Returns currently selected Skill IDs |
+| `setSelection` | `{ ids, scope, session_id? }` | Set the full selection |
+| `setSelected` | `{ skill_id, selected, scope, session_id? }` | Toggle a single Skill |
+
+**Scope values:** `"current"`, `"default"` / `"global"`, `"both"` / `"current_and_default"`. Using `"both"` updates the current session selection and the default selection independently.
+
+```typescript
+// List all skills
+const skills = await aether.services.invoke("skills", "list");
+
+// Get currently selected skills
+const selection = await aether.services.invoke("skills", "getSelection");
+
+// Enable a skill for the current chat
+await aether.services.invoke("skills", "setSelected", {
+  skill_id: "web-search",
+  selected: true,
+  scope: "current",
+});
+
+// Set default skills for all new chats
+await aether.services.invoke("skills", "setSelection", {
+  ids: ["web-search", "code-interpreter"],
+  scope: "default",
+});
+```
+
+### `state` service
+
+The `state` service provides direct read and transactional write access to Aether's application state.
+
+| Method | Arguments | Description |
+|---|---|---|
+| `get` | `{ path }` | Read state at path |
+| `transaction` | `{ operations }` | Apply state mutations |
+
+## Priority system
+
+Services are priority-ordered. The active implementation for a given service ID is always the highest-priority registration. When you remove a registration, the next-highest-priority implementation becomes active. Aether's core services intentionally use a low priority, so a Native Mod registering the same service ID at the default Native Mod priority will seamlessly override the built-in behavior.
+
+<Note>
+  Script Mods can call any registered service using `aether.services.invoke()`, but they cannot register new service implementations. To override a built-in service or add a new one, you must use a Native Mod.
+</Note>

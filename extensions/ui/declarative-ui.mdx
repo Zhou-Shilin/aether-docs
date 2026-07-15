@@ -1,0 +1,285 @@
+---
+title: "Declarative UI Nodes for Aether Extension Surfaces"
+sidebarTitle: "Declarative UI"
+description: "Build extension UIs using Aether's native declarative node system — text, rows, columns, cards, buttons, inputs, switches, and more."
+---
+
+Aether's `ui` factory provides a set of declarative node types that render as native Android Compose views inside surfaces, components, and pages. Each factory call returns a plain node descriptor object; Aether's Android renderer resolves these descriptors into Compose components at display time.
+
+## Import
+
+```typescript
+import { ui } from "@aether/extension-api";
+```
+
+You can also access `ui` directly from the `aether` parameter passed to your extension factory:
+
+```typescript
+export const activateAether = defineAetherExtension((aether) => {
+  const { ui } = aether; // equivalent to the named import
+});
+```
+
+---
+
+## Node types reference
+
+### Layout
+
+#### `ui.column(children, opts?)`
+
+Stacks its children vertically.
+
+```typescript
+ui.column([
+  ui.text("Line 1"),
+  ui.text("Line 2"),
+])
+```
+
+---
+
+#### `ui.row(children, opts?)`
+
+Arranges children horizontally. By default the row fills the available width and keeps all children on one line.
+
+| Option | Type | Description |
+|---|---|---|
+| `wrap` | `boolean` | Allow children to wrap onto multiple lines. Useful for narrow Android layouts. |
+| `rowSpacing` | `number` | Spacing between wrapped lines. |
+| `maxItemsInEachRow` | `number` | Cap the number of items per line when wrapping is enabled. |
+
+A direct child may set `weight` to consume the remaining horizontal space while sibling controls keep their intrinsic size.
+
+```typescript
+ui.row([
+  ui.text("Label"),
+  ui.button("Action", "my-action", { weight: 1 }),
+])
+```
+
+---
+
+#### `ui.box(children, opts?)`
+
+An overlay/stack container that draws children on top of each other.
+
+```typescript
+ui.box([
+  ui.text("Background layer"),
+  ui.text("Foreground layer"),
+])
+```
+
+---
+
+#### `ui.scroll(children, opts?)`
+
+Wraps its children in a scrollable container.
+
+```typescript
+ui.scroll([
+  ui.text("Item 1"),
+  ui.text("Item 2"),
+  // ... many more items
+])
+```
+
+---
+
+#### `ui.spacer(size?, opts?)`
+
+Inserts flexible space. The `size` parameter sets the spacing in dp (default: `8`).
+
+```typescript
+ui.row([
+  ui.text("Left"),
+  ui.spacer(16),
+  ui.text("Right"),
+])
+```
+
+---
+
+### Text
+
+#### `ui.text(content, opts?)`
+
+Renders a text string. Use `opts.style` to apply a typographic role:
+
+| Style | Description |
+|---|---|
+| `"headline"` | Large display heading |
+| `"title"` | Section or card title |
+| `"body"` | Default body copy |
+| `"caption"` | Small supplementary text |
+| `"code"` | Inline monospace text |
+
+```typescript
+ui.text("Hello Aether", { style: "headline" })
+```
+
+---
+
+#### `ui.code(content, opts?)`
+
+Renders content as a monospace code block.
+
+```typescript
+ui.code("const x = 42;")
+```
+
+---
+
+### Interactive
+
+#### `ui.button(label, actionId, opts?)`
+
+A tappable button that fires a registered action when pressed.
+
+| Option | Type | Description |
+|---|---|---|
+| `args` | `object` | Arguments forwarded to the action handler. |
+| `weight` | `number` | Consume remaining horizontal space inside a row. |
+| `width` | `number` | Explicit width override in dp. |
+
+```typescript
+ui.button("Run", "run-action", { args: { verbose: true } })
+```
+
+Button labels always render on a single line. Providing `weight` or an explicit `width` overrides the default fill behavior.
+
+---
+
+#### `ui.iconButton(icon, actionId, opts?)`
+
+An icon-only button. Use this to conserve horizontal space when a text label isn't needed.
+
+```typescript
+ui.iconButton("refresh", "reload-data")
+```
+
+---
+
+#### `ui.switch(label, checked, actionId, opts?)`
+
+A labeled toggle switch. Pass the current boolean state as `checked`.
+
+```typescript
+ui.switch("Enable feature", storage.featureEnabled ?? false, "toggle-feature")
+```
+
+<Note>
+The `switch` factory signature is `ui.switch(label, checked, actionId, opts?)`. Unlike `button`, the current state is a positional argument — not an option — so the action handler always receives an up-to-date value.
+</Note>
+
+---
+
+#### `ui.input(value, actionId, opts?)`
+
+A text input field. Pass the current string value as the first argument.
+
+| Option | Type | Description |
+|---|---|---|
+| `multiline` | `boolean` | Allow the input to expand to multiple lines. |
+
+```typescript
+ui.input(storage.query ?? "", "update-query", { multiline: false })
+```
+
+---
+
+### Cards and navigation
+
+#### `ui.card(children, opts?)`
+
+An elevated card container that groups related content.
+
+```typescript
+ui.card([
+  ui.text("Card title", { style: "title" }),
+  ui.text("Card body"),
+])
+```
+
+---
+
+#### `ui.pageButton(pageId, opts?)`
+
+A navigation button that opens the registered page with the given `id` when tapped.
+
+```typescript
+ui.pageButton("dashboard") // navigates to the page registered with id "dashboard"
+```
+
+---
+
+### Progress and composition
+
+#### `ui.progress(value?, opts?)`
+
+Renders a progress indicator. Omit `value` for an indeterminate (spinning) state; pass a `number` between `0` and `1` for a determinate bar.
+
+```typescript
+ui.progress()          // indeterminate
+ui.progress(0.65)      // 65 % complete
+```
+
+---
+
+#### `ui.core()`
+
+A placeholder that marks where the wrapped native or replacement content should render inside a `wrap`-mode component registration. Use it inside `registerComponent` calls with `mode: "wrap"`.
+
+```typescript
+aether.registerComponent("chat.composer.actionTray", {
+  id: "my-wrapper",
+  mode: "wrap",
+  render: () =>
+    ui.column([
+      ui.text("Above the original"),
+      ui.core(),
+      ui.text("Below the original"),
+    ]),
+});
+```
+
+---
+
+## Combining nodes — full surface example
+
+The example below registers an action that increments a persistent counter and a surface that renders it above the chat composer.
+
+```typescript
+import { defineAetherExtension, ui } from "@aether/extension-api";
+
+export const activateAether = defineAetherExtension((aether) => {
+  aether.registerAction("increment", ({ amount = 1 }) => {
+    const count = aether.storage.get("count", 0) + Number(amount);
+    aether.storage.set("count", count);
+    aether.invalidate();
+  });
+
+  aether.registerSurface("chat.composer.top", {
+    id: "counter-surface",
+    render: ({ is_running, storage }) =>
+      ui.card([
+        ui.row([
+          ui.text(`Count: ${storage.count ?? 0}`, { style: "title" }),
+          ui.button("+1", "increment", { args: { amount: 1 } }),
+        ]),
+        is_running
+          ? ui.text("Agent is running...", { style: "caption" })
+          : ui.progress(),
+      ]),
+  });
+});
+```
+
+<Note>
+All `ui.*` factories return a plain JavaScript object — the node descriptor. Aether's Android renderer resolves these objects to Compose components when the surface or page is displayed.
+</Note>
+
+<Tip>
+Row children fill available width by default. Set `weight` on one child to let it expand while sibling controls keep their intrinsic size. For example, placing `{ weight: 1 }` on a button stretches it to fill the remaining row space alongside a fixed-width label.
+</Tip>

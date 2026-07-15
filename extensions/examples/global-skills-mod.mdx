@@ -1,0 +1,293 @@
+---
+title: "Global Skills Mod: Managing Default Skills Across Chats"
+sidebarTitle: "Global Skills Mod"
+description: "The global-skills-mod example shows how to replace Aether's composer tray, manage global Skill defaults, and build a custom Skills management page."
+---
+
+The `examples/global-skills-mod` package is the reference implementation for global, persistent Skill selection across chats. It originated from Aether issue #27 and demonstrates combining UI replacement, native service calls, and operation interception in a single Script Mod — no Native Mod required.
+
+## What this mod does
+
+- Replaces `chat.composer.actionTray` with a custom tray that shows the current global Skill selection and an expand/collapse toggle
+- Hides `chat.composer.skillPicker` (the built-in per-chat Skill rows) to keep the UI clean
+- Reads the full Skill catalog from Aether's native `skills` service
+- Writes individual Skill toggles back via `skills.setSelected` and writes bulk selections via `skills.setSelection`
+- Persists the expand/collapse state in extension storage
+- Intercepts `chat.new` to apply the current global defaults to every new chat automatically
+- Adds a "Global Skills" full-screen page to the conversation drawer for dedicated management
+
+## Package declaration
+
+The `package.json` registers a single entry point under `aether.extensions`. There is no `pi` key because this mod has no Pi agent component:
+
+```json
+{
+  "name": "aether-global-skills-mod",
+  "version": "1.0.0",
+  "description": "Minecraft-style replacement of Aether's native skill tray with persistent global defaults.",
+  "aether": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}
+```
+
+## Full annotated code walkthrough
+
+### 1. Imports
+
+```ts
+import {
+  defineAetherExtension,
+  ui,
+} from "@aether/extension-api";
+
+type Skill = {
+  id: string;
+  name: string;
+  description?: string;
+  enabled?: boolean;
+  selected?: boolean;
+  default_selected?: boolean;
+};
+```
+
+Because this is a Script-only Aether Mod (no Pi integration), there is no import from `@earendil-works/pi-coding-agent`. The local `Skill` type mirrors the shape returned by the native `skills` service's `list` method, used throughout the `render` callbacks for type-safe destructuring.
+
+---
+
+### 2. Component registrations: replacing the action tray and hiding the skill picker
+
+```ts
+aether.registerComponent("chat.composer.actionTray", {
+  id: "global-skill-tray",
+  mode: "replace",
+  order: 100,
+  render: (context) => { /* ... see section 4 */ },
+});
+
+aether.registerComponent("chat.composer.skillPicker", {
+  id: "hide-native-skill-picker",
+  mode: "hide",
+  order: 100,
+});
+```
+
+`registerComponent` targets named built-in Compose UI. Two registrations work together here:
+
+- **`mode: "replace"` on `chat.composer.actionTray`** — completely replaces the default selected-Skill/MCP/Agent Mode tray. The `order: 100` value ensures this registration wins over any lower-priority replacement from another extension.
+- **`mode: "hide"` on `chat.composer.skillPicker`** — suppresses the built-in per-chat Skill rows that appear in the composer plus menu. Because the mod takes over global Skill selection through the tray, the native per-chat picker would be confusing and redundant. A `hide` registration needs no `render` — the target simply disappears.
+
+---
+
+### 3. Page registration: the Global Skills management page
+
+```ts
+aether.registerPage({
+  id: "global-skills",
+  title: "Global Skills",
+  subtitle: "Persistent defaults powered by Mod Kernel v2",
+  icon: "extension",
+  render: (context) => {
+    const skills = (context.skills ?? []) as Skill[];
+    const defaultIds = new Set(
+      Array.isArray(context.default_skill_ids)
+        ? context.default_skill_ids.map(String)
+        : [],
+    );
+    return ui.column([
+      ui.text("Global skill defaults", {
+        style: "headline",
+        weight: "bold",
+      }),
+      ui.text(
+        "These selections are written into Aether's native Skill state and applied to new chats.",
+        { color: "muted" },
+      ),
+      ...skills
+        .filter((skill) => skill.enabled !== false)
+        .map((skill) =>
+          ui.switch(
+            skill.name,
+            defaultIds.has(skill.id),
+            "set-skill",
+            {
+              subtitle: skill.description ?? "",
+              args: { skill_id: skill.id },
+            },
+          )
+        ),
+    ], {
+      scroll: true,
+      spacing: 10,
+    });
+  },
+});
+```
+
+`registerPage` adds a full-screen destination to the conversation drawer. Key points:
+
+- **`context.skills`** — comes from the live app state; Aether surfaces the Skill catalog alongside the rest of the UI state automatically.
+- **`context.default_skill_ids`** — reflects the current default selection from the native `skills` service. The page derives `defaultIds` from this to drive the switch states without maintaining a duplicate in extension storage.
+- **`ui.switch(label, checked, actionId, options)`** — renders a labeled toggle row. Each switch fires the `set-skill` action with `{ skill_id: skill.id }` as `args`, passing the specific Skill ID to the action handler.
+- **`skill.enabled !== false`** — filters out Skills the platform has disabled; those should not appear in the management UI.
+- **`scroll: true`** — makes the column scrollable for large Skill catalogs.
+
+---
+
+### 4. Surface: showing the current global Skill selection in the tray
+
+The `render` callback for the `chat.composer.actionTray` replacement reads live context and builds the tray UI:
+
+```ts
+render: (context) => {
+  const skills = (context.skills ?? []) as Skill[];
+  const selectedIds = new Set(
+    Array.isArray(context.selected_skill_ids)
+      ? context.selected_skill_ids.map(String)
+      : [],
+  );
+  const expanded = Boolean(context.storage.expanded);
+  const selectedSkills = skills.filter((skill) => selectedIds.has(skill.id));
+
+  return ui.card([
+    ui.row([
+      ui.column([
+        ui.text("Global Skills", { style: "label", weight: "semibold" }),
+        ui.text(
+          selectedSkills.length === 0
+            ? "No defaults"
+            : `${selectedSkills.length} enabled for every new chat`,
+          { style: "small", color: "muted" },
+        ),
+      ], { weight: 1 }),
+      ui.button(expanded ? "Collapse" : "Manage", "toggle-expanded", {
+        args: { expanded: !expanded },
+        tone: "neutral",
+      }),
+    ], {
+      arrangement: "space-between",
+      verticalAlignment: "center",
+    }),
+    ...(expanded
+      ? [ /* expanded skill list — see below */ ]
+      : selectedSkills.length > 0
+        ? [
+            ui.text(
+              selectedSkills.map((skill) => skill.name).join(" · "),
+              { style: "small", color: "muted", maxLines: 2 },
+            ),
+          ]
+        : []),
+  ], { radius: 20 });
+},
+```
+
+- **`context.selected_skill_ids`** — reflects the currently active Skill selection for the open chat, sourced from native state. The tray derives `selectedSkills` from this to show counts and names without duplicating state.
+- **`context.storage.expanded`** — the collapse/expand toggle state is the only thing stored in extension storage; everything else reads from native app state.
+- **Collapsed state** — when `expanded` is `false` and at least one Skill is selected, the tray shows the Skill names joined by ` · ` as a muted caption. When nothing is selected it shows "No defaults".
+
+When `expanded` is `true`, the tray renders a scrollable list of Skill toggles and a Clear button:
+
+```ts
+ui.column([
+  ...skills
+    .filter((skill) => skill.enabled !== false)
+    .map((skill) =>
+      ui.switch(
+        skill.name,
+        selectedIds.has(skill.id),
+        "set-skill",
+        {
+          subtitle: skill.description ?? "",
+          args: { skill_id: skill.id },
+        },
+      )
+    ),
+  ui.button("Clear global selection", "clear", {
+    tone: "neutral",
+    width: "fill",
+  }),
+], { spacing: 8 }),
+```
+
+---
+
+### 5. Reading Skills from the `skills` service
+
+```ts
+const skills = (context.skills ?? []) as Skill[];
+const selectedIds = new Set(
+  Array.isArray(context.selected_skill_ids)
+    ? context.selected_skill_ids.map(String)
+    : [],
+);
+```
+
+Aether injects the Skill catalog and current selection directly into the `render` context under `context.skills` and `context.selected_skill_ids`. You do not need to call `aether.services.invoke("skills", "list")` manually inside `render` — the platform keeps these fields up to date and re-renders surfaces whenever they change.
+
+When you need to read Skills imperatively (outside `render`, e.g., in an action handler), use:
+
+```ts
+const result = await aether.services.invoke("skills", "list");
+```
+
+---
+
+### 6. Writing selections back via `skills.setSelected` and `skills.setSelection`
+
+```ts
+aether.registerAction("set-skill", async ({ skill_id, checked }) => {
+  await aether.services.invoke("skills", "setSelected", {
+    skill_id,
+    selected: Boolean(checked),
+    scope: "both",
+  });
+});
+
+aether.registerAction("clear", async () => {
+  await aether.services.invoke("skills", "setSelection", {
+    ids: [],
+    scope: "both",
+  });
+});
+```
+
+- **`setSelected`** toggles a single Skill. `scope: "both"` updates both the current chat's selection and the default selection at once. The native service propagates the change back into app state, which triggers a re-render of every surface that reads `selected_skill_ids`.
+- **`setSelection`** replaces the entire selection with an explicit list of IDs. The `clear` action passes an empty array to deselect all Skills in both scopes.
+
+---
+
+### 7. Persisting defaults in `storage` and applying them via `chat.new` intercept
+
+The expand/collapse preference is the only value written to `storage`:
+
+```ts
+aether.registerAction("toggle-expanded", ({ expanded }) => {
+  aether.storage.set("expanded", Boolean(expanded));
+});
+```
+
+Because Skill selections are written directly into native state via `setSelected` / `setSelection`, there is no need to mirror them in extension storage. Aether's native `skills` service persists default selections on its own.
+
+To apply those defaults to every new chat automatically, the mod intercepts the `chat.new` operation:
+
+```ts
+aether.intercept("chat.new", ({ selected_skill_ids }) => ({
+  selected_skill_ids,
+}));
+```
+
+`aether.intercept("chat.new", handler)` fires before a new conversation is created. The handler receives the operation payload — which already includes the current `selected_skill_ids` derived from the native default selection — and returns that same value. This ensures the new chat is seeded with the global defaults without any additional logic. Returning a top-level field merges it into the chained payload.
+
+## Key patterns demonstrated
+
+- **Combining `registerComponent` (replace + hide) with `registerPage`** — you can suppress a built-in UI element entirely while simultaneously substituting your own replacement and adding a dedicated management page, all from a single `activateAether` factory call.
+- **Using `aether.services.invoke("skills", ...)` for real native state** — rather than maintaining a shadow copy of Skill data in extension storage, the mod reads from and writes to the actual native `skills` service. This means the selections are always consistent with what the rest of Aether sees.
+- **Using `aether.intercept("chat.new", ...)` to seed every new chat with global defaults** — operation interception lets you modify the payload of built-in operations before they execute, making it straightforward to enforce invariants across every new conversation.
+- **`aether.invalidate()` after storage writes to trigger surface re-renders** — if you write to `storage` inside an action handler and want surfaces to reflect the new value immediately, call `aether.invalidate()` after the write. In this mod, `toggle-expanded` updates `storage.expanded` and the framework re-renders the tray automatically; explicit `invalidate()` calls would be needed if storage writes happened outside an action registered with Aether.
+
+<Note>
+This mod is a Script Mod only (`aether.extensions`) — it achieves full Skill management without needing a Native Mod, showing the power of the Script API. All persistent state lives in Aether's native `skills` service; extension storage is used only for the tray's expand/collapse preference. If you need to intercept Skill selections at a lower level (for example, to lock a Skill against deselection), combine this pattern with `aether.intercept("skills.selection", ...)`.
+</Note>

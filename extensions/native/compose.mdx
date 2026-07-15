@@ -1,0 +1,141 @@
+---
+title: "Native Compose Components: Replace Aether UI from Kotlin"
+sidebarTitle: "Compose"
+description: "Register native Jetpack Compose component renderers from a Kotlin Native Mod to replace or wrap any of Aether's built-in UI targets."
+---
+
+Native Compose components give you full Jetpack Compose access when replacing or wrapping Aether's built-in UI. They surround the Script component pipeline — a Native `Replace` is decisive over Script-level replacements, and Native `Wrap` components sit on the outside of all Script component wrappers.
+
+## API
+
+Call `context.registerComponent()` inside `onLoad`:
+
+```kotlin
+context.registerComponent(
+    target: String,
+    id: String,
+    mode: AetherNativeComponentMode,
+    priority: Int,
+    renderer: AetherNativeComponentRenderer
+)
+```
+
+| Parameter | Description |
+|---|---|
+| `target` | The built-in component target to modify (see target table below). |
+| `id` | A stable string identifier for this registration. |
+| `mode` | How this renderer interacts with the target (see mode table below). |
+| `priority` | Within a mode, higher-priority registrations are evaluated last — the last `Replace` or `Hide` wins. |
+| `renderer` | An `AetherNativeComponentRenderer` implementation. May be `null` for `Hide` mode. |
+
+## AetherNativeComponentMode values
+
+| Mode | Behaviour |
+|---|---|
+| `Before` | Renders immediately before the target content. |
+| `After` | Renders immediately after the target content. |
+| `Replace` | Replaces the target content. The last `Replace` registration (by priority, then registration order) is decisive. |
+| `Wrap` | Surrounds the resolved center content. Multiple `Wrap` registrations compose outward. |
+| `Hide` | Suppresses the target entirely. The last `Hide` registration wins. |
+
+## Built-in component targets
+
+| Target | Built-in UI |
+|---|---|
+| `app.content` | Entire routed Aether application content. |
+| `chat.screen` | Complete chat screen. |
+| `settings.screen` | Complete settings screen. |
+| `chat.composer.actionTray` | Selected Skill / MCP / Agent Mode tray. |
+| `chat.composer.skillPicker` | Skill rows in the composer plus menu. |
+
+## AetherNativeComponentRenderer interface
+
+```kotlin
+interface AetherNativeComponentRenderer {
+    @Composable
+    fun render(
+        context: AetherNativeComponentContext,
+        next: @Composable () -> Unit,
+    )
+}
+```
+
+The `context` parameter provides:
+
+| Property | Type | Description |
+|---|---|---|
+| `target` | `String` | The target string this renderer was registered for. |
+| `uiState` | `AetherUiState` | Aether's full internal UI state. |
+| `publicState` | `JSONObject` | A JSON snapshot of the public app state. |
+| `host` | `AetherNativeHost` | An async bridge for invoking host methods. |
+
+The `next` parameter is a `@Composable () -> Unit` representing the downstream content — either the built-in Compose implementation, Script component replacements, or the next Native component. Call `next()` inside `Wrap` mode renderers to render the wrapped content.
+
+## Example — Replace mode
+
+Replace the action tray with custom Compose content:
+
+```kotlin MyNativeMod.kt
+context.registerComponent(
+    target = "chat.composer.actionTray",
+    id = "native-tray",
+    mode = AetherNativeComponentMode.Replace,
+    priority = 500,
+    renderer = object : AetherNativeComponentRenderer {
+        @Composable
+        override fun render(
+            context: AetherNativeComponentContext,
+            next: @Composable () -> Unit,
+        ) {
+            Text("Rendered from a Native Mod", Modifier.padding(16.dp))
+        }
+    },
+)
+```
+
+## Example — Wrap mode
+
+Surround the existing action tray with additional content:
+
+```kotlin
+context.registerComponent(
+    target = "chat.composer.actionTray",
+    id = "native-tray-wrapper",
+    mode = AetherNativeComponentMode.Wrap,
+    priority = 500,
+    renderer = object : AetherNativeComponentRenderer {
+        @Composable
+        override fun render(
+            context: AetherNativeComponentContext,
+            next: @Composable () -> Unit,
+        ) {
+            Column {
+                Text("Above original")
+                next() // renders the wrapped content
+                Text("Below original")
+            }
+        }
+    },
+)
+```
+
+## Example — Hide mode
+
+Suppress the skill picker entirely (no renderer required):
+
+```kotlin
+context.registerComponent(
+    target = "chat.composer.skillPicker",
+    id = "hide-skill-picker",
+    mode = AetherNativeComponentMode.Hide,
+    priority = 500,
+)
+```
+
+<Note>
+  Compose renderers must be compiled with the Compose compiler version matching
+  the Aether build they target. A version mismatch can cause crashes at class
+  loading time. See the{" "}
+  <a href="/extensions/native/safe-mode">Safe Mode</a> page for recovery
+  options.
+</Note>

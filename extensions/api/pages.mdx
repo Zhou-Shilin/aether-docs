@@ -1,0 +1,73 @@
+---
+title: "registerPage: Add Full-Screen Pages to Aether's Drawer"
+sidebarTitle: "Pages"
+description: "Use registerPage to add extension-owned full-screen destinations that appear automatically in Aether's conversation drawer."
+---
+
+Pages are full-screen destinations your extension owns. They appear automatically in the conversation drawer and can contain any declarative UI tree — including a WebView for unrestricted HTML micro-UIs. Use pages for dashboards, settings panels, or complex interactions that don't fit in a surface slot.
+
+## API signature
+
+```typescript
+aether.registerPage(definition: PageDefinition): () => void;
+```
+
+`registerPage` returns a cleanup function. Call it to remove the page registration from the drawer and from navigation.
+
+## PageDefinition fields
+
+<ParamField path="id" type="string" required>
+  Unique page identifier. Aether uses this to scope the page within your extension and to target the page from `ui.pageButton(pageId)` navigation calls. Must be a non-empty string.
+</ParamField>
+
+<ParamField path="title" type="string" required>
+  Primary label shown in the conversation drawer entry and in the page header. Must be a non-empty string.
+</ParamField>
+
+<ParamField path="subtitle" type="string">
+  Secondary label displayed below the title in the drawer. Use this to provide a short description of the page's purpose.
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Icon name displayed next to the title in the drawer. Aether uses the [Lucide](https://lucide.dev/icons/) icon set. Defaults to `"extension"` when omitted.
+</ParamField>
+
+<ParamField path="render" type="function" required>
+  A factory function that returns the page's `ui` node tree. The function may be synchronous or `async` and receives the standard render context.
+
+  ```typescript
+  render: (context: RenderContext) => ui node | Promise<ui node>
+  ```
+</ParamField>
+
+## Example
+
+```typescript index.ts
+aether.registerPage({
+  id: "dashboard",
+  title: "Build dashboard",
+  subtitle: "Extension-owned UI",
+  icon: "code",
+  render: () => ui.column([
+    ui.text("Dashboard", { style: "headline" }),
+    ui.button("Run", "run"),
+  ]),
+});
+```
+
+## Navigating to a page
+
+Use `ui.pageButton(pageId)` in any surface, component, or other page to render a navigation button that opens the target page:
+
+```typescript
+aether.registerSurface("chat.composer.top", {
+  id: "open-dashboard",
+  render: () => ui.pageButton("dashboard"),
+});
+```
+
+The `pageId` value must match the `id` field you passed to `registerPage`. Aether scopes page IDs to their registering extension, so IDs only need to be unique within your own extension.
+
+<Tip>
+  Pages are great for extension settings panels, dashboards, or complex interactions that don't fit in a surface. Because pages have their own full-screen layout, they can host long-scrolling content, multi-step workflows, or WebView-based UIs.
+</Tip>

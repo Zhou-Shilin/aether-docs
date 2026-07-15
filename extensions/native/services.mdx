@@ -1,0 +1,84 @@
+---
+title: "Native Service Registration: Override Aether's Core Services"
+sidebarTitle: "Services"
+description: "Register higher-priority service implementations from a Native Mod to override Aether's built-in skills, state, or custom services in the mod kernel."
+---
+
+The mod kernel's service registry is priority-ordered. By registering a service with a higher priority than Aether's built-in implementation, your Native Mod becomes the active implementation for that service ID. Removing your registration automatically restores the next-lower-priority implementation.
+
+## API
+
+Call `context.registerService()` inside `onLoad`:
+
+```kotlin
+context.registerService(
+    id: String,
+    priority: Int,
+    methods: List<AetherModServiceMethod>,
+    handler: (method: String, args: JSONObject) -> JSONObject
+)
+```
+
+| Parameter | Description |
+|---|---|
+| `id` | The service identifier (e.g. `"skills"`, `"state"`, or a custom string). |
+| `priority` | Higher value wins. Aether core services use a deliberately low priority. |
+| `methods` | The list of `AetherModServiceMethod` names this implementation handles. |
+| `handler` | Lambda invoked with the method name and a `JSONObject` of arguments; returns a `JSONObject` result. |
+
+## Priority rules
+
+Aether core services use a deliberately low priority so that Native Mods can override them with a standard priority value. Use priority **`500`** to reliably override any built-in service. Removing your registration (by calling the returned cleanup lambda) restores the next-lower-priority implementation, which may be another mod's registration or Aether's built-in.
+
+## Example — overriding the skills service
+
+The following mod registers itself as the active implementation of the `skills` service and returns an empty skill list:
+
+```kotlin MyNativeMod.kt
+class MyNativeMod : AetherNativeMod {
+    override fun onLoad(context: AetherNativeModContext) {
+        context.registerService(
+            id = "skills",
+            priority = 500,
+            methods = listOf(AetherModServiceMethod("list")),
+        ) { method, args ->
+            when (method) {
+                "list" -> JSONObject().put("skills", JSONArray())
+                else -> throw UnsupportedOperationException("Unknown method: $method")
+            }
+        }
+    }
+
+    override fun onUnload() { /* cleanup */ }
+}
+```
+
+`context.registerService()` returns a cleanup lambda. Call it to unregister the service before the mod is unloaded, or let `onUnload` handle it automatically.
+
+## Built-in services
+
+The following services are registered by Aether core:
+
+### `skills`
+
+| Method | Arguments |
+|---|---|
+| `list` | — |
+| `getSelection` | — |
+| `setSelection` | `ids`, `scope`, `session_id?` |
+| `setSelected` | `skill_id`, `selected`, `scope`, `session_id?` |
+
+Valid `scope` values: `current`, `default` / `global`, `both` / `current_and_default`.
+
+### `state`
+
+| Method | Arguments |
+|---|---|
+| `get` | `path` |
+| `transaction` | `operations` |
+
+<Tip>
+  You can expose entirely new services from a Native Mod — not just override
+  existing ones. Other extensions discover them via `aether.services.list()` and
+  invoke them via `aether.services.invoke()`.
+</Tip>

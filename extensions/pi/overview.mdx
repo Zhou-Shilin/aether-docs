@@ -1,0 +1,61 @@
+---
+title: "Pi Agent Extensions: Add Tools and Commands to the Aether Agent"
+sidebarTitle: "Overview"
+description: "Build Pi extensions to add custom agent tools, slash commands, and session hooks that run inside Aether's Pi framework agent loop."
+---
+
+Pi extensions plug into the agent execution engine that powers Aether. They add custom tools the agent can call during a turn, slash commands users can invoke directly, and session lifecycle hooks — all running inside the Pi framework's agent loop.
+
+## What are Pi extensions?
+
+Aether runs on the Pi agent framework (`@earendil-works/pi-agent-core`, `@earendil-works/pi-coding-agent`). Pi extensions are standard Pi framework extensions that gain full access to the agent loop running inside Aether. Because they execute in the Node.js bridge process, they have access to the full Node.js runtime and the Pi framework's tool-calling and command dispatch infrastructure.
+
+## Declaring a Pi extension
+
+Add a `pi.extensions` array to your `package.json` pointing at one or more entry files:
+
+```json package.json
+{
+  "name": "my-pi-extension",
+  "version": "1.0.0",
+  "pi": {
+    "extensions": ["./agent.ts"]
+  }
+}
+```
+
+Each entry file is loaded by the Pi framework when the extension is activated.
+
+## The Pi extension factory
+
+The entry file must export a **default function** that the Pi framework calls with an `ExtensionAPI` instance:
+
+```typescript agent.ts
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+
+export default function activate(pi: ExtensionAPI) {
+  // Register tools, commands, and hooks here
+}
+```
+
+The factory may be synchronous or `async`. Use the `pi` parameter to register everything your extension provides.
+
+## Pi vs Aether extensions
+
+A single package can contain both a Pi extension and an Aether Script Mod. They serve different roles:
+
+| | Pi extension | Aether Script Mod |
+|---|---|---|
+| **Runtime** | Node.js bridge process | Android app process (JS bridge) |
+| **Primary role** | Agent tools, commands, agent loop hooks | Android UI surfaces, component replacement, host API access |
+| **Entry export** | Default export (`activate`) | Named export (`activateAether` or `aether`) |
+| **Reload** | Hot-reloads with Script Mods | Hot-reloads |
+
+When you need both agent-loop capabilities and Android UI customisation in one package, keep the Pi factory as the default export and export the Aether factory as `activateAether`. See [Tools & Commands](/extensions/pi/tools-commands) for a combined example.
+
+<Note>
+  The Pi framework API (`ExtensionAPI`) is defined by the
+  `@earendil-works/pi-coding-agent` package. Refer to the Pi framework
+  documentation for the full API surface including session hooks, streaming, and
+  advanced tool options.
+</Note>

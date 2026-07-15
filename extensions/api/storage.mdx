@@ -1,0 +1,86 @@
+---
+title: "Extension Storage: Persistent Key-Value Store for Mods"
+sidebarTitle: "Storage"
+description: "Use Aether's extension storage API to persist key-value data between sessions. Storage is private to each extension and backed by the app's filesystem."
+---
+
+Each extension gets a private persistent key-value store. Data survives hot-reloads and app restarts because Aether backs the store by `~/.aether/app-extension-state.json` inside the Alpine filesystem. No other extension can read or write your extension's storage.
+
+## API reference
+
+```typescript
+readonly storage: {
+  get<T>(key: string, fallback?: T): T;
+  set(key: string, value: unknown): void;
+  delete(key: string): void;
+  clear(): void;
+  snapshot(): object;
+};
+```
+
+All storage methods are **synchronous**.
+
+## Reading a value
+
+Pass an optional fallback as the second argument to `get()`. The fallback is returned when the key does not exist:
+
+```typescript
+const count = aether.storage.get("count", 0);
+const name = aether.storage.get<string>("name", "Anonymous");
+```
+
+## Writing a value
+
+```typescript
+aether.storage.set("count", 42);
+aether.storage.set("config", { theme: "dark", autoSend: false });
+```
+
+## Deleting a value
+
+```typescript
+aether.storage.delete("count");
+```
+
+## Clearing all extension storage
+
+```typescript
+aether.storage.clear();
+```
+
+## Getting a full snapshot
+
+`snapshot()` returns a plain object containing all key-value pairs currently stored by your extension:
+
+```typescript
+const all = aether.storage.snapshot();
+```
+
+## Using storage in a surface render
+
+The following example wires a persistent counter to a surface rendered above the chat composer:
+
+```typescript
+aether.registerAction("increment", ({ amount = 1 }) => {
+  const count = aether.storage.get("count", 0) + Number(amount);
+  aether.storage.set("count", count);
+  aether.invalidate(); // trigger re-render
+});
+
+aether.registerSurface("chat.composer.top", {
+  id: "counter",
+  render: ({ storage }) =>
+    ui.row([
+      ui.text(`Count: ${storage.count ?? 0}`),
+      ui.button("Increment", "increment", { args: { amount: 1 } }),
+    ]),
+});
+```
+
+<Note>
+  The `storage` object passed to your surface's `render` function is a snapshot taken at render time. After a storage write, call `aether.invalidate()` to trigger a fresh render with the updated snapshot.
+</Note>
+
+<Tip>
+  Store only JSON-serializable values — strings, numbers, booleans, plain objects, and arrays. Functions and class instances will not be persisted correctly.
+</Tip>

@@ -1,0 +1,121 @@
+---
+title: "WebView Node: HTML Micro-UIs in Aether Extensions"
+sidebarTitle: "WebView"
+description: "Use ui.web() to embed a fully capable WebView inside any Aether extension surface or page, with bidirectional communication via Aether.postMessage."
+---
+
+When the declarative node types aren't enough, `ui.web()` embeds a real Android WebView directly inside your surface or page, giving you access to the full HTML, CSS, and JavaScript stack. Use it for custom visualizations, rich layouts, or any interaction model that the native node set doesn't cover.
+
+## API signature
+
+```typescript
+ui.web(opts: WebNodeOptions)
+```
+
+## Options
+
+<ParamField body="html" type="string" required>
+  The complete HTML content to render inside the WebView. This is a full HTML document string — include `<!DOCTYPE html>` and a `<body>` for reliable rendering across Android versions.
+</ParamField>
+
+<ParamField body="height" type="number">
+  Explicit height in dp. If omitted, the WebView fills the available vertical space in its container.
+</ParamField>
+
+---
+
+## What's enabled in the WebView
+
+The following capabilities are enabled by default in every `ui.web()` WebView:
+
+- **JavaScript execution** — `<script>` tags and inline handlers run normally.
+- **DOM storage** — `localStorage` and `sessionStorage` are available.
+- **Network access** — fetch, XMLHttpRequest, and WebSocket connect to remote hosts.
+- **File access** — the WebView can read from the local filesystem.
+- **Content access** — Android `content://` URIs resolve correctly.
+
+---
+
+## Bidirectional communication — `Aether.postMessage`
+
+Aether injects a global `Aether` object into every WebView. Call `Aether.postMessage(jsonString)` from your JavaScript code to invoke a registered extension action:
+
+```javascript
+Aether.postMessage(JSON.stringify({
+  action: "actionId",
+  args: { key: "value" }
+}));
+```
+
+The message must be a JSON-serialised string. The top-level `action` field names the registered action to invoke; `args` is an optional object forwarded to the action handler as its payload.
+
+---
+
+## Full example — WebView with action bridge
+
+```typescript index.ts
+import { defineAetherExtension, ui } from "@aether/extension-api";
+
+export const activateAether = defineAetherExtension((aether) => {
+  aether.registerAction("web-clicked", ({ source }) => {
+    aether.notify(`Clicked from: ${source}`, "info");
+  });
+
+  aether.registerPage({
+    id: "web-panel",
+    title: "Web Panel",
+    icon: "globe",
+    render: () =>
+      ui.web({
+        height: 320,
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <body style="font-family:sans-serif;padding:16px">
+            <h2>Hello from WebView</h2>
+            <button onclick='Aether.postMessage(JSON.stringify({
+              action: "web-clicked",
+              args: { source: "button" }
+            }))'>Click me</button>
+          </body>
+          </html>
+        `,
+      }),
+  });
+});
+```
+
+When the user taps the button, the WebView calls `Aether.postMessage`, which invokes the `"web-clicked"` action registered in the extension. The action handler receives `{ source: "button" }` as its payload and surfaces a notification toast.
+
+---
+
+## Injecting dynamic data
+
+Because `html` is a normal JavaScript string, you can interpolate values from `storage`, `state`, or any render-context field at render time:
+
+```typescript
+render: ({ storage }) =>
+  ui.web({
+    height: 200,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <body style="font-family:sans-serif;padding:16px">
+        <h3>Count: ${storage.count ?? 0}</h3>
+      </body>
+      </html>
+    `,
+  }),
+```
+
+Aether calls `render` every time the extension's state is invalidated, so the WebView content stays in sync with your extension's persisted storage.
+
+---
+
+<Warning>
+The WebView has full network access. Do not render untrusted HTML content or resolve external URLs without considering the security implications. An attacker who can influence the `html` value can execute arbitrary JavaScript with access to the `Aether.postMessage` bridge and all enabled device capabilities.
+</Warning>
+
+<Tip>
+Use `Aether.postMessage` for any interaction that needs to trigger extension logic — state updates, notifications, navigation, or service calls. The message must be a JSON string with an `action` field and an optional `args` object. There is no return value from `postMessage`; use storage and `aether.invalidate()` to push updated data back into the WebView on the next render.
+</Tip>

@@ -1,0 +1,81 @@
+---
+title: "App State API: Read and Write Aether's Global State"
+sidebarTitle: "State"
+description: "Use the state API to read, patch, and transact on Aether's public app state — including draft input, selected model, skills, and agent mode."
+---
+
+The state API gives your extension read/write access to Aether's public app state. Use it to prefill the composer, toggle agent mode, change the selected model, or manage Skill selections — all through a consistent path-based interface that works across Script Mods.
+
+## API reference
+
+```typescript
+readonly state: {
+  get(path?: string): Promise<object>;
+  patch(path: string, value: unknown): Promise<object>;
+  transaction(operations: Array<{
+    op?: "set" | "remove";
+    path: string;
+    value?: unknown;
+  }>): Promise<object>;
+};
+```
+
+## Supported state paths
+
+| Path | Type | Description |
+|---|---|---|
+| `draft_input` | string | Current composer text |
+| `selected_skill_ids` | string[] | Skills active in the current chat |
+| `default_skill_ids` | string[] | Skills auto-selected for new chats |
+| `agent_mode_enabled` | boolean | Whether Agent Mode is on |
+| `selected_model_key` | string | Key of the active model |
+| `screen` | string | Current screen (`"chat"` or `"settings"`) |
+
+## state.get
+
+Read the full public state object, or pass a path string to read a specific field:
+
+```typescript
+const state = await aether.state.get();
+console.log(state.selected_model_key);
+
+// Or read a specific path
+const draft = await aether.state.get("draft_input");
+```
+
+Calling `state.get()` with no argument returns the entire public state snapshot as an object. Passing a path string returns only the value at that path.
+
+## state.patch
+
+Write a single state path. `patch` is a convenience shorthand for a single-operation transaction:
+
+```typescript
+await aether.state.patch("draft_input", "Review the current changes.");
+```
+
+## state.transaction
+
+Apply multiple state changes atomically. Operations are applied in array order:
+
+```typescript
+await aether.state.transaction([
+  { path: "draft_input", value: "Review the current changes." },
+  { path: "agent_mode_enabled", value: true },
+]);
+```
+
+Each operation defaults to `op: "set"` when `op` is omitted. Pass `op: "remove"` to clear a path:
+
+```typescript
+await aether.state.transaction([
+  { op: "remove", path: "draft_input" },
+]);
+```
+
+<Note>
+  Transactions apply operations in order. They provide a common mutation API, not database-level rollback across unrelated Android repositories. If an individual operation fails, earlier operations in the same transaction are not reversed.
+</Note>
+
+<Tip>
+  Prefer `state.transaction` over multiple `state.patch` calls when you need to update several paths at once. Batching changes into a single transaction avoids intermediate re-renders between writes and keeps related state updates consistent from Aether's perspective.
+</Tip>

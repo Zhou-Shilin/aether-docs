@@ -1,0 +1,64 @@
+---
+title: "Built-in Alpine Linux Runtime for Command Execution"
+sidebarTitle: "Alpine Runtime"
+description: "Aether includes a managed Alpine Linux VM powered by proot. Run shell commands, install packages, and execute scripts directly from the agent."
+---
+
+Aether ships with a bundled Alpine Linux arm64 rootfs that runs inside [proot](https://proot-me.github.io/), giving the AI agent a complete Linux command environment without requiring root access on your Android device. This is the execution backbone behind Agent Mode's shell capabilities.
+
+## How It Works
+
+**proot** provides chroot-like filesystem isolation by intercepting system calls at the user level — no root, no kernel modifications. The Alpine rootfs is bundled directly in the Aether app assets and is automatically extracted on first use.
+
+Once initialized, the agent can run any Alpine-compatible command inside this environment:
+
+```bash
+apk add python3     # install packages
+python3 script.py   # run code
+node index.js       # JavaScript runtime
+git clone <repo>    # version control
+curl https://...    # HTTP requests
+```
+
+The proot environment is fully self-contained. Anything you install or modify stays within the Alpine rootfs and does not affect the rest of your Android system.
+
+## First-Time Setup
+
+On the **first message you send with Agent Mode enabled**, Aether silently extracts and initializes the Alpine environment in the background. You will see a brief setup indicator during this process. Initialization typically takes **30–60 seconds** depending on your device — subsequent sessions start instantly from the already-extracted rootfs.
+
+## What's Included
+
+Aether provisions a standard **Alpine Linux arm64 base system**. Out of the box you get the Alpine shell (`ash`), core utilities (`busybox`), and the `apk` package manager. From there you can install anything in the Alpine package registry:
+
+```bash
+apk add python3 py3-pip nodejs npm git curl wget ffmpeg
+```
+
+Packages install into the Alpine rootfs and persist across Aether sessions.
+
+## Using Shell Tools
+
+When the agent executes shell commands in Agent Mode, they run **inside the Alpine environment**. Keep this in mind when interpreting file paths:
+
+| Path inside Alpine | What it refers to |
+|---|---|
+| `/home` | Alpine's home directory (inside the rootfs) |
+| `/tmp` | Alpine's temp directory |
+| `/sdcard` | Your Android shared storage (if exposed by proot) |
+| `/` | Root of the Alpine rootfs, not your Android `/` |
+
+## Accessing Android Storage
+
+The agent can reach your Android shared storage via the `/sdcard` path inside Alpine, provided proot exposes the mount. This lets the agent read files from your Downloads folder, process media, or write results back to a location accessible from other Android apps.
+
+## Persisting Data
+
+The Alpine rootfs lives in Aether's **private app storage** and persists across sessions. Files you (or the agent) create in `~` inside Alpine remain available the next time you open Aether. Think of it as a persistent Linux home directory tied to your Aether install.
+
+<Note>
+  Alpine runs on **arm64-v8a** only. This is the reason Aether requires an arm64 (64-bit ARM) Android device — the bundled rootfs binary is compiled for that architecture.
+</Note>
+
+<Tip>
+  Install Python, Node.js, or other runtimes with a single command — for example, `apk add python3 nodejs` — by asking the agent to run it. Once installed, those runtimes are available in every future session without reinstalling.
+</Tip>

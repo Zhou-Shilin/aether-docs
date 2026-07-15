@@ -1,0 +1,46 @@
+---
+title: "Aether: AI Agent for Android Explained"
+sidebarTitle: "Introduction"
+description: "Aether brings a full-featured, locally-run AI agent to your Android device. Learn what sets it apart from other AI chat apps."
+---
+
+**Aether** is a general-purpose AI Agent for Android built on the [Pi framework](https://github.com/Zhou-Shilin/Aether). It pairs a minimalist, carefully polished UI with a powerful agentic execution engine that supports multiple LLM providers out of the box. Whether you want a capable AI chat companion or a fully autonomous on-device agent that can run shell commands and control your phone, Aether handles both.
+
+## What Aether is NOT
+
+Aether is **not** a cloud service, and it is not a wrapper around a single AI provider's app. Every LLM API key and credential you configure stays on your device inside Aether's private app directory — nothing is routed through an intermediary server. You choose your provider; you own your data.
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Multi-Provider LLM Support" icon="brain">
+    Connect to OpenAI, Anthropic, Google, DeepSeek, Groq, Mistral, Cloudflare, and more — all from a single app. Switch providers and models without leaving the chat screen.
+  </Card>
+  <Card title="Built-in Alpine Linux VM" icon="terminal">
+    A managed Alpine Linux environment is automatically installed on first use. Aether calls shell commands and CLI tools directly through this environment, giving the agent real compute power on your device.
+  </Card>
+  <Card title="Termux & Shizuku" icon="mobile">
+    Optionally integrate with Termux for direct Android shell access or Shizuku for privileged system operations — enabling deep device automation without root.
+  </Card>
+  <Card title="Extension System" icon="puzzle-piece">
+    Extend Aether with hot-reload TypeScript mods for rapid iteration or compiled Kotlin/DEX native mods for full platform power. A single extension package can augment the Pi agent and inject native Compose or WebView UI into the app.
+  </Card>
+</CardGroup>
+
+## The Pi Framework
+
+Aether is built on top of the **Pi agent framework**, which serves as its core execution engine. Pi provides:
+
+- **Broad LLM provider compatibility** — a unified interface across all supported providers so that switching models requires no code changes.
+- **Lightweight agent execution** — an efficient harness that manages tool calls, context windows, and multi-step reasoning loops without excessive overhead.
+- **Extensibility hooks** — the same extension points that Aether exposes to developers are built directly into Pi's architecture.
+
+Because Aether delegates provider communication and agent orchestration to Pi, it stays lean while remaining highly capable.
+
+## For Extension Developers
+
+Aether's extension system lets you ship new tools, UI elements, and agent behaviors as self-contained packages. Extensions can be written as hot-reload TypeScript mods for quick prototyping, or as compiled Kotlin/DEX native mods when you need full access to Android APIs and native performance.
+
+<Card title="Extension Developer Guide" icon="code" href="/extensions/overview">
+  Learn how to build, package, and distribute your own Aether extensions.
+</Card>

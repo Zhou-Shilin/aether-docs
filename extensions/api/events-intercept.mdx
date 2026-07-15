@@ -1,0 +1,82 @@
+---
+title: "Events and Operation Interception in Aether Extensions"
+sidebarTitle: "Events & Intercept"
+description: "Subscribe to Aether events with on() and intercept operations like chat.new and skills.selection to observe or modify app behavior from your extension."
+---
+
+Aether extensions can subscribe to app events and intercept operations to observe, modify, or cancel built-in behaviors. Events give you a passive window into app activity; interceptors let you actively shape or stop operations before they complete.
+
+## `on()` — event subscription
+
+```typescript
+aether.on(event: string, handler: EventHandler): () => void;
+```
+
+`on()` registers a handler for a named event and returns a cleanup function you can call to unsubscribe. Common events include `before_send`, which fires before a chat message is submitted.
+
+```typescript
+aether.on("before_send", ({ draft_input }) => {
+  console.log("User is sending:", draft_input);
+});
+```
+
+## `intercept()` — operation interception
+
+```typescript
+aether.intercept(operation: string, handler: EventHandler): () => void;
+```
+
+`intercept()` registers a handler that runs inside the operation dispatch chain. Interceptors can observe, modify, or cancel the operation. Native interceptors run first, followed by Script handlers in extension registration order.
+
+## Built-in operations
+
+| Operation | Payload fields | Description |
+|---|---|---|
+| `chat.new` | `selected_skill_ids` | Fired when a new chat is created |
+| `skills.selection` | `skill_id`, `selected` | Fired when a Skill is toggled |
+
+## Returning from an interceptor
+
+Your interceptor handler controls how the operation proceeds based on its return value:
+
+- **Return `undefined` or nothing** — the payload passes through to the next interceptor unchanged.
+- **Return an object with top-level fields** — those fields are merged into the chained payload.
+- **Return `{ payload: {...} }`** — explicitly replaces all payload fields with the supplied object.
+- **Return `{ cancel: true, reason: "..." }`** — stops the operation entirely and surfaces the reason.
+
+## `chat.new` example
+
+Set default Skills for every new chat by intercepting `chat.new` and returning the updated `selected_skill_ids`:
+
+```typescript
+aether.intercept("chat.new", ({ selected_skill_ids }) => ({
+  selected_skill_ids,
+}));
+```
+
+## `skills.selection` example
+
+Lock a specific Skill so it cannot be deselected:
+
+```typescript
+aether.intercept("skills.selection", ({ skill_id, selected }) => {
+  if (skill_id === "locked-skill" && !selected) {
+    return { cancel: true, reason: "This Skill is locked by the Mod." };
+  }
+});
+```
+
+## Wildcard interception (Native Mods only)
+
+In a Native Mod interceptor, pass `"*"` as the operation name to observe every operation dispatched through the registry:
+
+```kotlin
+context.intercept("*", priority = 500) { payload, _ ->
+    // Runs for every operation
+    AetherModOperationDecision(payload = payload)
+}
+```
+
+<Note>
+  Script interceptors and Native interceptors form one shared chain. Native interceptors always run before Script interceptors for the same operation, regardless of registration order.
+</Note>

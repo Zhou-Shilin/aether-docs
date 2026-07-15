@@ -1,0 +1,122 @@
+---
+title: "Aether Extension Package Format and package.json Fields"
+sidebarTitle: "Package Format"
+description: "Learn the package.json structure for Aether extensions, including pi.extensions, aether.extensions, and aether.native fields with working examples."
+---
+
+An Aether extension is a directory (or zip archive) containing a `package.json` that declares which entry files power which tiers. Aether reads this manifest at load time to discover entry points for the Pi agent layer, the Script Mod runtime, and the native DEX loader. Only the fields relevant to the tiers you use are required — unused tier fields are simply absent.
+
+## Full package.json example
+
+The example below activates all three tiers from a single package:
+
+```json package.json
+{
+  "name": "my-aether-mod",
+  "version": "1.0.0",
+  "pi": {
+    "extensions": ["./agent.ts"]
+  },
+  "aether": {
+    "extensions": ["./android.ts"],
+    "native": {
+      "classpath": ["./native/mod.dex"],
+      "libraryPath": ["./native/lib"],
+      "entrypoints": ["com.example.aether.MyNativeMod"]
+    }
+  }
+}
+```
+
+## Fields reference
+
+<ParamField path="name" type="string" required>
+  An npm-style package name that identifies your extension. Use lowercase letters, numbers, and hyphens (for example, `my-aether-mod` or `@myorg/chat-enhancer`). Aether uses this name in the Extensions list and when generating stable extension IDs.
+</ParamField>
+
+<ParamField path="version" type="string" required>
+  A [semver](https://semver.org/) version string (for example, `1.0.0`). Increment this value when you publish updates so Aether and package managers can track changes.
+</ParamField>
+
+<ParamField path="pi.extensions" type="string[]">
+  Array of paths to Pi extension entry files, relative to the package root. Each file is loaded by the Pi Coding Agent runtime. Export a factory function as `default` to register Pi commands, tools, and hooks. Omit this field if your extension does not target the Pi agent layer.
+</ParamField>
+
+<ParamField path="aether.extensions" type="string[]">
+  Array of paths to Aether Script Mod entry files, relative to the package root. Each file is loaded by the Aether Script Mod runtime (API v2). Export your factory as `activateAether` or `aether` (or as `default` for an Aether-only package) to register surfaces, components, pages, actions, and event handlers. Changes to these files hot-reload without restarting the app. Omit this field if your extension does not use the Script Mod API.
+</ParamField>
+
+<ParamField path="aether.native.classpath" type="string[]">
+  Array of paths to `.dex`, `.apk`, or jar/zip files that contain a compiled `classes.dex`, relative to the package root. Aether passes these paths to `DexClassLoader` at process startup. A plain JVM `.class` jar is not sufficient — run Android D8/R8 on your compiled output first. Omit the entire `aether.native` object if your extension does not include a Native Mod.
+</ParamField>
+
+<ParamField path="aether.native.libraryPath" type="string[]">
+  Array of paths to directories containing `.so` native libraries, relative to the package root. Aether adds these directories to the native library search path when loading the DEX classpath. Only required if your Native Mod uses JNI libraries.
+</ParamField>
+
+<ParamField path="aether.native.entrypoints" type="string[]">
+  Array of fully-qualified Kotlin class names that implement `AetherNativeMod`. Aether instantiates each class via the DEX classloader and calls `onLoad(context)` during process startup. Requires `aether.native.classpath` to contain the compiled classes.
+</ParamField>
+
+## Script-only vs native-only packages
+
+**Script-only** packages omit the `aether.native` object entirely. This is the most common extension format and supports full hot-reload:
+
+```json package.json
+{
+  "name": "my-script-mod",
+  "version": "1.0.0",
+  "aether": {
+    "extensions": ["./index.ts"]
+  }
+}
+```
+
+**Native-only** zip packages can omit both the `pi` field and the `extensions` field under `aether`. Include only `aether.native`:
+
+```json package.json
+{
+  "name": "my-native-mod",
+  "version": "1.0.0",
+  "aether": {
+    "native": {
+      "classpath": ["./build/mod.dex"],
+      "entrypoints": ["com.example.aether.MyNativeMod"]
+    }
+  }
+}
+```
+
+## Installation location
+
+Extension packages live under `~/.aether/extensions` inside Aether's managed Alpine filesystem. When you import a zip via Settings → Extensions → Import, Aether extracts the package into a subdirectory there. npm-based packages installed through Aether's package management are also discovered from this root at load time.
+
+## Shared Pi + Aether entry point
+
+When you share a single entry file between `pi.extensions` and `aether.extensions`, keep the Pi factory as the `default` export and export the Aether factory as `activateAether` or `aether`. The Script Mod runtime looks for `activateAether` or `aether` first; it falls back to `default` only for packages listed exclusively under `aether.extensions`.
+
+```typescript index.ts
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { defineAetherExtension, ui } from "@aether/extension-api";
+
+export default function activatePi(pi: ExtensionAPI) {
+  pi.registerCommand("hello", {
+    description: "Pi-compatible command",
+    handler: async (_args, ctx) => ctx.ui.notify("Hello from Pi", "info"),
+  });
+}
+
+export const activateAether = defineAetherExtension((aether) => {
+  aether.registerSurface("chat.composer.top", {
+    id: "hello",
+    render: () => ui.button("Insert prompt", "insert"),
+  });
+  aether.registerAction("insert", () =>
+    aether.state.patch("draft_input", "Explain this repository.")
+  );
+});
+```
+
+<Note>
+  The `defineAetherExtension` helper provides TypeScript types for the `aether` argument and is a no-op at runtime — it simply returns the factory function you pass in. Import it from `@aether/extension-api`.
+</Note>

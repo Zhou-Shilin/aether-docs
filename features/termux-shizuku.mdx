@@ -1,0 +1,83 @@
+---
+title: "Termux and Shizuku Integration for Android Automation"
+sidebarTitle: "Termux & Shizuku"
+description: "Connect Aether to Termux for broader terminal access, or use Shizuku to enable privileged Agent Mode for Android device automation."
+---
+
+Beyond the built-in Alpine VM, Aether can integrate with **Termux** for additional terminal capabilities and **Shizuku** for privileged Android device automation. Both integrations are optional — enable them only when you need what they provide.
+
+## Termux Integration
+
+[Termux](https://termux.dev/) is a powerful Android terminal emulator with its own package ecosystem. When you connect Aether to Termux, the agent can run commands directly in your Termux session and access its filesystem alongside (or instead of) the built-in Alpine environment.
+
+### Requirements
+
+<Warning>
+  You must install Termux from **[F-Droid](https://f-droid.org/packages/com.termux/)** or the **[Termux GitHub releases](https://github.com/termux/termux-app/releases)** page — **not** from the Google Play Store. The Play Store version does not support the `RUN_COMMAND` permission that Aether requires to execute commands in Termux.
+</Warning>
+
+### Setup
+
+1. Install Termux from F-Droid or GitHub.
+2. Open Aether and go to **Settings → Integrations → Termux**.
+3. Tap **Connect Termux**. Aether requests the `com.termux.permission.RUN_COMMAND` permission — tap **Grant** when prompted.
+4. The integration is now active. The agent routes applicable shell commands through your Termux session.
+
+### Use Cases
+
+- Access Termux's broader package ecosystem (`apt`/`pkg` packages not available in Alpine).
+- Share your **Termux home directory** (`~/`) with the agent — handy if you already have tools, configs, or data there.
+- Run commands alongside other Termux sessions you have open.
+
+---
+
+## Shizuku Integration
+
+[Shizuku](https://shizuku.rikka.app/) grants Aether a **privileged `adb shell`-level process** without requiring a fully rooted device. With Shizuku active, Agent Mode unlocks a set of capabilities that let the agent see and control the Android UI itself.
+
+### Requirements
+
+- **Shizuku** installed from Google Play or GitHub.
+- Shizuku started via one of:
+  - **Wireless ADB debugging** (no root required — available on Android 11+)
+  - A **rooted device** using the Shizuku root method
+
+### Setup
+
+1. Install and start Shizuku following the [Shizuku setup guide](https://shizuku.rikka.app/guide/setup/).
+2. Open Aether. When you enable **Agent Mode**, Aether automatically requests the Shizuku permission (`moe.shizuku.manager.permission.API_V23`).
+3. A Shizuku permission dialog appears — tap **Allow**.
+4. Agent Mode is now running in privileged mode. The composer's Agent Mode toggle reflects the elevated status.
+
+### What Privileged Agent Mode Enables
+
+With Shizuku active, the agent gains the following capabilities on top of standard Agent Mode:
+
+<CardGroup cols={2}>
+  <Card title="Virtual Displays" icon="display">
+    Create virtual Android displays independent of your physical screen.
+  </Card>
+  <Card title="App Launch" icon="rocket">
+    Launch any installed app on a virtual display for sandboxed automation.
+  </Card>
+  <Card title="Touch Injection" icon="hand-pointer">
+    Inject tap, swipe, long-press, and multi-touch gestures into any display.
+  </Card>
+  <Card title="Key Events" icon="keyboard">
+    Send hardware key events (Back, Home, Volume, etc.) and type text into any focused app.
+  </Card>
+  <Card title="Screenshots" icon="camera">
+    Capture screenshots of any display — physical or virtual — for vision-based feedback loops.
+  </Card>
+  <Card title="App Inventory" icon="list">
+    List all installed apps and their package names for discovery and targeting.
+  </Card>
+</CardGroup>
+
+<Warning>
+  Shizuku grants the agent significant system-level access — roughly equivalent to a connected ADB session. It can launch apps, read screen content, and inject input into any running application. Only enable this integration if you understand and trust the tasks you are asking the agent to perform.
+</Warning>
+
+<Note>
+  The Shizuku permission `moe.shizuku.manager.permission.API_V23` is declared in Aether's `AndroidManifest.xml` and the `ShizukuProvider` content provider is registered automatically. You do not need to configure anything extra — just approve the permission request in Shizuku's interface when prompted by Aether.
+</Note>

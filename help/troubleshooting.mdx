@@ -1,0 +1,77 @@
+---
+title: "Troubleshooting Common Aether Issues"
+sidebarTitle: "Troubleshooting"
+description: "Fix common problems with Aether including provider connection errors, Alpine Linux initialization failures, Shizuku setup issues, and extension crashes."
+---
+
+This page covers the most common issues users encounter and how to resolve them. If none of these steps solve your problem, open an issue on the [Aether GitHub repository](https://github.com/Zhou-Shilin/Aether/issues) with as much detail as possible.
+
+<AccordionGroup>
+
+  <Accordion title='"API key invalid" or provider connection error'>
+    When Aether can't connect to a provider after saving your key, work through these checks in order:
+
+    1. **Re-examine the key itself** — open the provider's dashboard, copy the key again, and paste it freshly. A single extra space at the beginning or end will cause an authentication failure.
+    2. **Verify the key is active** — some providers let you disable or revoke individual keys. Log in to the provider's dashboard and confirm the key is in an active/enabled state.
+    3. **Check your account credits or quota** — a key can be technically valid but refused if your account balance is zero or your rate limit is exhausted.
+    4. **Remove and re-add the provider** — go to **Settings → Providers**, remove the entry entirely, then tap **Add Provider** and start fresh. This clears any cached state.
+  </Accordion>
+
+  <Accordion title="Alpine Linux initialization is stuck">
+    The first time Aether initializes the Alpine Linux environment, it downloads and extracts approximately **100 MB** of data. This is normal but requires a stable connection and sufficient storage:
+
+    1. **Check your internet connection** — switch to Wi-Fi if you're on a slow mobile connection, and ensure you have a stable signal throughout initialization.
+    2. **Wait at least 5 minutes** — extraction on some devices is slower than expected. Do not navigate away or kill the app while the progress indicator is visible.
+    3. **Force-stop and retry** — if initialization appears completely frozen after 5 minutes, open **Android Settings → Apps → Aether → Force Stop**, then reopen Aether. It will resume or restart the initialization process automatically.
+    4. **Free up storage** — ensure at least **200 MB of free storage** is available on your device. A near-full device can cause the extraction to fail silently.
+  </Accordion>
+
+  <Accordion title="Agent Mode not responding / agent loop hangs">
+    If the agent appears to be running but nothing is progressing:
+
+    1. **Tap the pause button** — every active agent session shows a pause/stop control in the composer area. Tap it to interrupt the current run cleanly.
+    2. **Test with a simple prompt** — send a minimal request like "What is 2+2?" to verify that the model and tool-calling pipeline are functional.
+    3. **Test the shell** — send a message like "Run `echo hello` in the shell" to confirm that the Alpine Linux runtime initialized successfully and the shell tool is responding.
+    4. **Check your provider's status page** — the hang may be on the provider's side. Check their status page for ongoing incidents.
+  </Accordion>
+
+  <Accordion title="Shizuku integration not working">
+    If Aether cannot connect to Shizuku for privileged operations:
+
+    1. **Confirm Shizuku is running** — open the Shizuku app. The main screen should display "Shizuku is running." If it shows stopped, start it again via Wireless Debugging (ADB).
+    2. **Grant Aether permission in Shizuku** — open the Shizuku app → **Authorized apps** and make sure Aether appears in the list with permission granted. If it's absent, the next time Aether tries to use Shizuku it will prompt you to authorize.
+    3. **Restart Shizuku after a reboot** — Shizuku does not persist across device reboots by default. After restarting your phone, open the Shizuku app and start the service again before using Aether's Shizuku-dependent features.
+  </Accordion>
+
+  <Accordion title="Termux integration not available">
+    If the Termux integration is greyed out or not recognized:
+
+    1. **Use the correct Termux distribution** — you must install Termux from [F-Droid](https://f-droid.org/en/packages/com.termux/) or [GitHub Releases](https://github.com/termux/termux-app/releases). The Play Store version of Termux does **not** support the `RUN_COMMAND` permission required for integration with other apps.
+    2. **Verify the permission is granted** — go to **Android Settings → Apps → Aether → Permissions** and confirm that the Termux-related permission is enabled. If it is missing from the list, re-install Termux from F-Droid and try again.
+  </Accordion>
+
+  <Accordion title="An extension is crashing Aether on startup (Native Mod Safe Mode)">
+    If Aether repeatedly crashes immediately after launch, a native mod (compiled Kotlin/DEX extension) is likely the culprit:
+
+    1. **Wait for Safe Mode to activate** — after a certain number of consecutive crashes, Aether enters **Native Mod Safe Mode** automatically. In this mode, all native mods are bypassed so the app can start.
+    2. **Identify the offending extension** — once in Safe Mode, go to **Settings → Extensions**. The extension list will indicate which mod was being loaded at the time of the crash.
+    3. **Disable or remove the extension** — tap the extension entry to disable it or remove it entirely.
+    4. **Re-enable Native Mods** — after removing the problematic extension, toggle Native Mods back on in Settings → Extensions. Aether will load the remaining mods normally on the next startup.
+  </Accordion>
+
+  <Accordion title="Chat history is missing">
+    If your previous conversations have disappeared:
+
+    1. **Check for an uninstall/reinstall** — Aether stores chat history in a local Room database inside its private app storage. Uninstalling and reinstalling Aether permanently deletes all history. There is no recovery path from an uninstall.
+    2. **Check available device storage** — if your device's storage became completely full while Aether was running, the database may have failed to write new records. Free up space and verify that new messages are saving correctly now.
+  </Accordion>
+
+  <Accordion title="Scheduled tasks are not firing">
+    If your scheduled tasks never run at their appointed time:
+
+    1. **Verify the `SCHEDULE_EXACT_ALARM` permission** — go to **Android Settings → Apps → Aether → Permissions** and confirm this permission is granted. Aether requests it during onboarding, but it can be revoked later.
+    2. **Disable battery optimization for Aether** — go to **Android Settings → Battery → Aether → Unrestricted** (labeling varies by manufacturer). Without this setting, Android can defer or prevent background wakeups.
+    3. **Add Aether to your device's autostart or protected apps list** — many OEM Android variants (Xiaomi MIUI/HyperOS, OPPO ColorOS, Samsung One UI, etc.) apply aggressive background process limits beyond the standard Android battery optimization system. Find the "autostart," "protected apps," or "background activity" setting in your device's built-in security or battery app and add Aether to the allowlist.
+  </Accordion>
+
+</AccordionGroup>

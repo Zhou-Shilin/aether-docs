@@ -1,0 +1,102 @@
+---
+title: "registerComponent: Replace or Wrap Aether's Built-in UI"
+sidebarTitle: "Components"
+description: "Use registerComponent to replace, wrap, hide, or augment Aether's native Compose components from a TypeScript extension."
+---
+
+`registerComponent` modifies named built-in Compose targets — letting you replace, wrap, or hide Aether's native UI elements from a Script Mod. Unlike surfaces, which add content without disturbing existing UI, component registrations interact directly with the rendering pipeline for the target and can remove or restructure it entirely.
+
+## API signature
+
+```typescript
+aether.registerComponent(target: string, definition: ComponentDefinition): () => void;
+```
+
+`registerComponent` returns a cleanup function. Call it to remove the component registration and revert the target to its previous state.
+
+## Available targets
+
+| Target | Built-in UI |
+|---|---|
+| `app.content` | Entire routed Aether application content |
+| `chat.screen` | Complete chat screen |
+| `settings.screen` | Complete settings screen |
+| `chat.composer.actionTray` | Selected Skill/MCP/Agent Mode tray |
+| `chat.composer.skillPicker` | Skill rows in the composer plus menu |
+
+## ComponentDefinition fields
+
+<ParamField path="id" type="string" required>
+  Unique identifier for this component registration. Aether uses this to track registrations from the same extension.
+</ParamField>
+
+<ParamField path="mode" type="string" required>
+  One of `"before"`, `"after"`, `"replace"`, `"wrap"`, or `"hide"`. Determines how this registration interacts with the target component and other registrations. See [Mode semantics](#mode-semantics) below.
+</ParamField>
+
+<ParamField path="order" type="number">
+  Ordering priority for this registration relative to others targeting the same component. For `replace` and `hide` modes, the registration with the highest `order` value is decisive. For `wrap`, `before`, and `after` registrations, order controls layering. Defaults to `0` when omitted.
+</ParamField>
+
+<ParamField path="render" type="function">
+  A factory function that returns a `ui` node tree. Required for all modes except `"hide"`, which removes the component without rendering anything in its place.
+
+  ```typescript
+  render: (context: RenderContext) => ui node | Promise<ui node>
+  ```
+</ParamField>
+
+## Mode semantics
+
+| Mode | Behavior |
+|---|---|
+| `before` | Renders your content immediately before the target without removing or replacing it |
+| `after` | Renders your content immediately after the target without removing or replacing it |
+| `replace` | Replaces the native component entirely. When multiple extensions register `replace` for the same target, the registration with the highest `order` value wins |
+| `wrap` | Surrounds the native component (or the winning replacement) with your layout. Use `ui.core()` inside your `render` tree to place the wrapped content. Multiple wrappers compose outward from the center |
+| `hide` | Removes the component from the UI entirely. The highest-`order` `hide` registration is decisive, following the same rule as `replace` |
+
+## Examples
+
+### Replace
+
+```typescript
+aether.registerComponent("chat.composer.actionTray", {
+  id: "replacement",
+  mode: "replace",
+  order: 100,
+  render: () => ui.card([
+    ui.text("My replacement tray"),
+  ]),
+});
+```
+
+### Wrap
+
+Use `ui.core()` to place the wrapped content within your layout:
+
+```typescript
+aether.registerComponent("chat.composer.actionTray", {
+  id: "wrapper",
+  mode: "wrap",
+  render: () => ui.column([
+    ui.text("Before the original"),
+    ui.core(),
+    ui.text("After the original"),
+  ]),
+});
+```
+
+### Hide
+
+```typescript
+aether.registerComponent("chat.composer.skillPicker", {
+  id: "remove-native-picker",
+  mode: "hide",
+  order: 100,
+});
+```
+
+<Note>
+  Multiple wrappers from different extensions are composed around a single center — the winning `replace` registration, or the native component if no `replace` registration exists. Native Mod components surround the Script component pipeline entirely, so a Native `replace` is decisive over any Script-level replacements.
+</Note>

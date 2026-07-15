@@ -1,0 +1,74 @@
+---
+title: "Installing Aether on Android"
+sidebarTitle: "Installation"
+description: "Download and install Aether on your Android 13+ device. Learn about build flavors, required permissions, and optional integrations."
+---
+
+Aether is distributed as an APK file and is not available on the Google Play Store. Installation is manual — you download the APK directly from GitHub and install it yourself. This page walks you through everything you need to know.
+
+## Requirements
+
+| Requirement | Detail |
+|---|---|
+| **Android version** | Android 13 or higher (minSdk 26) |
+| **Architecture** | arm64-v8a only |
+| **Free storage** | ~200 MB (app binary + Alpine Linux rootfs) |
+| **Internet connection** | Required for LLM API calls |
+
+## Download
+
+Download the latest APK from the [Aether GitHub Releases page](https://github.com/Zhou-Shilin/Aether/releases).
+
+Aether ships two build flavors:
+
+- **Release** — Stable builds recommended for everyday use. Published on the Releases page as versioned tags.
+- **Nightly** — Built automatically from the `main` branch. Contains the latest features and fixes but may be less stable. Download nightly builds from [nightly.link](https://nightly.link/Zhou-Shilin/Aether/workflows/build-nightly-apk.yml/main/Aether-nightly.zip). Nightly builds use different flavor resources (app name, icon) to distinguish them from the stable release.
+
+## Install steps
+
+<Steps>
+  <Step title="Allow installation from unknown sources">
+    Go to **Settings → Apps → Special app access → Install unknown apps**. Find your browser or file manager in the list and enable **Allow from this source**.
+  </Step>
+  <Step title="Open the downloaded APK">
+    Locate the APK file in your Downloads folder (or wherever your browser saved it) and tap it to open the installer.
+  </Step>
+  <Step title="Tap Install">
+    Tap **Install** on the Android installer prompt and wait for the installation to complete. The process typically takes a few seconds.
+  </Step>
+  <Step title="Open Aether and complete onboarding">
+    Tap **Open** once installation finishes (or find Aether in your app drawer). Follow the onboarding flow to grant permissions and configure your first LLM provider.
+  </Step>
+</Steps>
+
+## Permissions
+
+Aether requests the following permissions during onboarding or at runtime:
+
+| Permission | Purpose |
+|---|---|
+| `POST_NOTIFICATIONS` | Sends notifications when agent tasks complete or require your attention |
+| `FOREGROUND_SERVICE` | Keeps agent tasks running in the background while you use other apps |
+| `SCHEDULE_EXACT_ALARM` | Enables scheduled and time-triggered agent tasks |
+| `com.termux.permission.RUN_COMMAND` | **Optional.** Required to run commands inside a Termux session for Android shell integration |
+| `moe.shizuku.manager.permission.API_V23` | **Optional.** Required for Shizuku integration, which enables privileged system operations in Agent Mode |
+
+Aether requests only what it needs. Optional permissions are never requested unless you enable the corresponding integration.
+
+## Optional integrations
+
+### Termux
+
+[Termux](https://termux.dev/) is a terminal emulator and Linux environment for Android. When installed alongside Aether, it allows the agent to run commands directly in a Termux session — useful for tasks that benefit from a persistent shell environment or Termux packages.
+
+Install Termux from [F-Droid](https://f-droid.org/en/packages/com.termux/) (recommended) or the [Play Store](https://play.google.com/store/apps/details?id=com.termux).
+
+### Shizuku
+
+[Shizuku](https://shizuku.rikka.app/) lets apps use Android system APIs with elevated privileges without requiring a fully rooted device. Enabling Shizuku integration in Aether unlocks Agent Mode's privileged device automation capabilities — such as installing packages, modifying system settings, and performing other operations that normally require root.
+
+Install Shizuku from the [Play Store](https://play.google.com/store/apps/details?id=moe.shizuku.privileged.api) or [GitHub Releases](https://github.com/RikkaApps/Shizuku/releases).
+
+<Warning>
+  Aether does **not** request any storage permissions (`READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE`, or `MANAGE_ALL_FILES`). All app data — including your API keys, conversation history, and extension files — is stored exclusively within Aether's private app directory and is never accessible to other apps.
+</Warning>

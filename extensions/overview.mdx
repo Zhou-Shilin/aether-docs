@@ -1,0 +1,55 @@
+---
+title: "Aether Extension and Mod Kernel: Developer Overview"
+sidebarTitle: "Overview"
+description: "Build extensions that add tools, UI surfaces, and native Android capabilities to Aether using TypeScript or Kotlin. Learn the three-tier mod architecture."
+---
+
+Aether's Mod Kernel lets you build extensions that deeply integrate with the app — from adding new agent tools to replacing built-in UI components or accessing Android APIs directly. A single extension package can span all three tiers simultaneously, sharing code and configuration across Pi agent logic, hot-reloadable UI surfaces, and full-native Kotlin modules.
+
+## Three extension tiers
+
+Each tier targets a different layer of the Aether stack with a different language, loading model, and access surface.
+
+| Tier | Language | Loading | Access Level |
+|------|----------|---------|--------------|
+| `pi.extensions` | TypeScript/JS | Hot-reload | Pi agent tools, commands, hooks |
+| `aether.extensions` | TypeScript/JS | Hot-reload | Aether Script Mod API v2 (UI, state, services) |
+| `aether.native` | Kotlin/DEX | On process start (requires restart) | Full Android, Compose, and reflection |
+
+The `pi.extensions` tier integrates with the Pi Coding Agent layer — register commands, tools, and hooks that the agent executes. The `aether.extensions` tier gives you the Script Mod API v2: register UI surfaces, replace or wrap built-in Compose components, define full-screen pages, read and write app state, invoke services, and intercept operations. The `aether.native` tier loads compiled Kotlin DEX code directly into the app process, with unrestricted access to every Android API, Compose composable, and Aether implementation class.
+
+## No permission sandbox
+
+Extensions are trusted code. There is intentionally no permission sandbox. Installing an extension means trusting it with the Node.js runtime, the Android application context, all Aether services, and the Alpine/Termux workspace. Native Mods can use reflection, JNI, or Android APIs directly. The public registration APIs are convenience and interoperability surfaces, not security boundaries. Only install extensions from sources you trust.
+
+## One package, multiple tiers
+
+A single `package.json` can declare all three tiers at once. The `pi.extensions` array, `aether.extensions` array, and `aether.native` object are independent fields — you can include any combination, point them to separate entry files, or share a single entry file across `pi.extensions` and `aether.extensions` using named exports. This lets you ship a combined package that behaves correctly in both the Pi Coding Agent and the Aether Android app.
+
+## Installing extensions
+
+Extension packages live under `~/.aether/extensions` inside Aether's managed Alpine filesystem. You can install an extension in two ways:
+
+- **Import a zip**: open Settings → Extensions → Import and select the zip file. Aether extracts the package into `~/.aether/extensions` and loads it immediately.
+- **npm packages**: add the package through Aether's package management interface and declare `aether.extensions` entries in its `package.json`. Aether discovers and loads it alongside locally installed extensions.
+
+## Hot reload
+
+Script Mod changes — any modification to a `pi.extensions` or `aether.extensions` entry file — reload automatically without restarting Aether. The extension runtime re-imports the updated file, calls your factory function again, and triggers a UI refresh. Native Mods are discovered and loaded only during app process startup; installing, updating, removing, or changing a Native Mod requires restarting Aether.
+
+## Explore further
+
+<CardGroup cols={2}>
+  <Card title="Package Format" icon="file-code" href="/extensions/package-format">
+    Learn the `package.json` structure for all three tiers with field-level reference and examples.
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/extensions/quickstart">
+    Build and install your first Script Mod extension in minutes.
+  </Card>
+  <Card title="Script Mod API" icon="code" href="/extensions/api/surfaces">
+    Register UI surfaces, components, pages, actions, and service calls.
+  </Card>
+  <Card title="Native Mods" icon="microchip" href="/extensions/native/overview">
+    Write Kotlin DEX mods with full Android and Compose access.
+  </Card>
+</CardGroup>

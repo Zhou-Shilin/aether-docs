@@ -1,0 +1,56 @@
+---
+title: "Skills and MCP Servers: Extending Agent Tools"
+sidebarTitle: "Skills & MCP"
+description: "Add Skills and MCP servers to give the Aether agent specialized capabilities like web search, code execution, or custom API integrations."
+---
+
+Skills and MCP (Model Context Protocol) servers extend the tools available to the Aether agent far beyond its built-in capabilities. Think of them as plug-in modules — each one teaches the agent how to do something new, from browsing the web to calling your own internal APIs.
+
+## Skills
+
+Skills are **packaged sets of tools** that the agent can call during a task. A single Skill might bundle a web-search tool, a screenshot tool, and a clipboard tool together under one cohesive capability set.
+
+### Installing Skills
+
+Install Skills from the **Extensions** page in Aether. You can add a Skill in two ways:
+
+- **Zip import** — Download a `.zip` Skill package and import it via the Extensions page.
+- **npm package** — Enter a package name and Aether installs it directly from the npm registry.
+
+### Selecting Skills Per Chat
+
+Open the **Skill picker** in the action tray below the composer input. Each installed Skill appears as a toggle. Enable the Skills you want the agent to use in the current conversation, then send your message.
+
+Skills you select are **scoped to the current chat** unless you save them as defaults.
+
+### Setting Default Skills
+
+To automatically activate a Skill for every new chat, enable it in the Skill picker and tap **Set as Default**. Aether stores your selection in `default_skill_ids` in the app state and applies it to all new conversations going forward. You can still override defaults per chat.
+
+## MCP Servers
+
+MCP (Model Context Protocol) servers expose tools over a **standard interface** that Aether speaks natively. This means any conforming MCP server — whether you built it yourself or got it from the community — can immediately hand new capabilities to the agent.
+
+### Supported Transports
+
+| Transport | Use Case |
+|---|---|
+| **StdIo** | Local process on the same device (e.g., a script running in Termux or Alpine) |
+| **StreamableHttp** | Remote server reachable over HTTP — ideal for hosted APIs and cloud services |
+
+### Adding an MCP Server
+
+1. Go to **Settings → Skills/MCP**.
+2. Tap **Add MCP Server**.
+3. Enter the server name, transport type, and the command (StdIo) or URL (StreamableHttp).
+4. Tap **Save**.
+
+Once added, all tools that the MCP server exposes are immediately available in the agent's tool set during Agent Mode. No restart required.
+
+## Managing Default Skills
+
+Use the **Skill picker** in the composer to enable or disable individual Skills per chat. The `default_skill_ids` field in the app state governs which Skills are auto-selected when you open a brand new chat. You can update defaults at any time without affecting existing conversations.
+
+<Note>
+  The **Global Skills Mod** example in the Extension Developer documentation shows you how to build an extension that programmatically manages global Skill defaults across all chats. It's a great starting point if you want to create a custom Skill management experience inside Aether.
+</Note>

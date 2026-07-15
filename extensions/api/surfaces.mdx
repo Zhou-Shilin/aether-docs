@@ -1,0 +1,79 @@
+---
+title: "registerSurface: Add UI Content to Aether Chat and Settings"
+sidebarTitle: "Surfaces"
+description: "Use registerSurface to inject extension-provided UI into 8 named slots across the Aether interface, from above the composer to the conversation drawer."
+---
+
+Surfaces let your extension add UI content to predefined locations in the Aether interface without replacing built-in components. Each surface registration targets a named slot and contributes a declarative UI tree that Aether renders in that location alongside any other registered content.
+
+## API signature
+
+```typescript
+aether.registerSurface(slot: string, definition: SurfaceDefinition): () => void;
+```
+
+`registerSurface` returns a cleanup function. Call it to remove the surface registration and trigger a re-render.
+
+## Available slots
+
+| Slot | Location |
+|---|---|
+| `app.overlay` | Full application overlay |
+| `chat.top` | Under the chat top bar |
+| `chat.empty` | Empty-conversation surface |
+| `chat.list.start` | Before committed messages |
+| `chat.list.end` | After messages and pending work |
+| `chat.composer.top` | Directly above the composer |
+| `settings.hub` | Top of the settings hub |
+| `drawer` | Conversation drawer |
+
+## SurfaceDefinition fields
+
+<ParamField path="id" type="string" required>
+  Unique identifier for this surface registration. Aether uses this to track and de-duplicate registrations from the same extension.
+</ParamField>
+
+<ParamField path="order" type="number">
+  Controls the rendering order when multiple extensions register the same slot. Lower values render first. Defaults to `0` when omitted.
+</ParamField>
+
+<ParamField path="render" type="function" required>
+  A factory function that receives a render context and returns a `ui` node tree. The function may be synchronous or `async`.
+
+  ```typescript
+  render: (context: RenderContext) => ui node | Promise<ui node>
+  ```
+</ParamField>
+
+## Render context
+
+Aether passes the following fields to your `render` function on every render cycle:
+
+| Field | Type | Description |
+|---|---|---|
+| `is_running` | boolean | Whether the agent is currently generating a response |
+| `draft_input` | string | The current text in the composer input |
+| `storage` | object | A snapshot of your extension's persisted storage at render time |
+
+## Example
+
+```typescript index.ts
+aether.registerSurface("chat.composer.top", {
+  id: "status",
+  order: 10,
+  render: ({ is_running, draft_input, storage }) =>
+    ui.row([
+      ui.text(is_running ? "Agent running" : "Ready"),
+      ui.text(`${String(draft_input).length} chars`),
+      ui.text(`Count: ${storage.count ?? 0}`),
+    ]),
+});
+```
+
+<Note>
+  Call `aether.invalidate()` to force a re-render of all surfaces when your extension's internal state changes. Aether does not automatically re-render surfaces on arbitrary extension-side mutations — only on storage writes, action invocations, and explicit invalidation.
+</Note>
+
+<Tip>
+  Use `order` to ensure your surface renders in the right position when multiple extensions contribute to the same slot. Registrations with the same `order` value are sorted by their scoped ID as a stable tiebreaker.
+</Tip>

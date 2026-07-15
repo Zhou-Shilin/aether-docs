@@ -1,0 +1,98 @@
+---
+title: "Native Operation Interceptors: Observe and Modify App Operations"
+sidebarTitle: "Interceptors"
+description: "Register native operation interceptors in Kotlin to observe, modify, or cancel Aether operations like chat.new and skills.selection, including wildcard interception."
+---
+
+Native interceptors integrate into the same operation chain as Script interceptors but always run first. They can observe, modify, cancel, or replace operation payloads before any Script-level handler sees them.
+
+## API
+
+Call `context.intercept()` inside `onLoad`:
+
+```kotlin
+context.intercept(
+    operation: String,
+    priority: Int,
+    handler: (payload: JSONObject, chain: AetherModOperationChain) -> AetherModOperationDecision
+)
+```
+
+| Parameter | Description |
+|---|---|
+| `operation` | The operation name to intercept, or `"*"` to intercept every operation. |
+| `priority` | Higher-priority interceptors run first within the Native interceptor tier. |
+| `handler` | Lambda receiving the current `payload` and the `chain`; returns an `AetherModOperationDecision`. |
+
+## Decision types
+
+Your handler must return an `AetherModOperationDecision` that tells the chain what to do:
+
+| Decision | Effect |
+|---|---|
+| `AetherModOperationDecision(payload = ...)` | Pass the operation through with a modified payload. |
+| `AetherModOperationDecision(cancel = true, reason = "...")` | Cancel the operation. No further interceptors or built-in handlers run. |
+| `null` / empty decision | Pass through with the payload unchanged. |
+
+You can also use the `context.cancelOperation()` extension function as a shorthand:
+
+```kotlin
+return context.cancelOperation(payload, reason = "Blocked by MyNativeMod")
+```
+
+## Built-in operations
+
+| Operation | Triggered by |
+|---|---|
+| `chat.new` | A new chat turn starting. |
+| `skills.selection` | The user or an extension changing the active skill selection. |
+
+Use `"*"` to intercept every operation dispatched through the kernel — useful for diagnostics, logging, or blanket policy enforcement.
+
+## Example — modifying chat.new
+
+Clear the selected skill IDs before every new chat turn:
+
+```kotlin
+context.intercept("chat.new", priority = 500) { payload, _ ->
+    AetherModOperationDecision(
+        payload = payload.put("selected_skill_ids", JSONArray()),
+    )
+}
+```
+
+## Example — wildcard observer
+
+Log every operation without modifying it:
+
+```kotlin
+context.intercept("*", priority = 100) { payload, _ ->
+    Log.d("MyMod", "Operation: ${payload}")
+    null // pass through unchanged
+}
+```
+
+## Example — cancelling an operation
+
+Prevent a specific skill from being deselected:
+
+```kotlin
+context.intercept("skills.selection", priority = 500) { payload, _ ->
+    val skillId = payload.optString("skill_id")
+    val selected = payload.optBoolean("selected", true)
+    if (skillId == "locked-skill" && !selected) {
+        AetherModOperationDecision(
+            cancelled = true,
+            reason = "This skill is locked by MyNativeMod.",
+        )
+    } else {
+        null
+    }
+}
+```
+
+<Note>
+  Native interceptors run before Script interceptors for the same operation and
+  priority. Within the Native tier, interceptors are ordered by their `priority`
+  value — higher values run first.
+</Note>

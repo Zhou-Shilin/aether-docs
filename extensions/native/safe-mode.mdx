@@ -1,0 +1,63 @@
+---
+title: "Native Mod Safe Mode: Crash Recovery for Aether"
+sidebarTitle: "Safe Mode"
+description: "Aether's Native Mod Safe Mode automatically disables native mods after a crash loop, letting you recover and debug without getting stuck in a boot loop."
+---
+
+Aether protects against crash-looping native mods with an automatic Safe Mode. If a Native Mod causes a crash before the UI stabilizes, Safe Mode activates on the next start and skips all Native Mods — letting you open the app, diagnose the problem, and recover.
+
+## How it works
+
+Safe Mode uses a persistent startup marker to detect interrupted launches:
+
+1. Before loading any Native Mod, Aether sets a persistent `startup_in_progress` marker in app storage.
+2. The marker is cleared only after all mods load **and** the first Activity remains stable for several seconds (currently 5 seconds).
+3. If the process exits while the marker is still armed — crash, ANR, OOM, or forced kill — the next startup detects the armed marker and activates Safe Mode.
+
+## What happens in Safe Mode
+
+When Safe Mode activates:
+
+- All Native Mods are **skipped** for this startup — no DEX is loaded.
+- Script Mod (TypeScript) and Pi extensions remain fully active and hot-reloadable.
+- The last entrypoint being loaded when the crash occurred is recorded (if available) and surfaced in the UI.
+- **Settings → Extensions** displays a "Native Mod Safe Mode" banner identifying the suspected crash mod.
+
+## Recovering from Safe Mode
+
+<Steps>
+  <Step title="Open Settings → Extensions">
+    Launch Aether. Because Native Mods are skipped, the app starts normally
+    even if a mod was crashing on load.
+  </Step>
+  <Step title="Review the flagged entrypoint">
+    The Safe Mode banner shows the last entrypoint that was being loaded when
+    the crash occurred. Use this to identify the offending extension.
+  </Step>
+  <Step title="Remove or fix the offending extension">
+    Uninstall the problematic extension, or update it with a fixed DEX artifact.
+  </Step>
+  <Step title="Re-enable Native Mods">
+    Tap **"Re-enable Native Mods"** in the Safe Mode banner. This clears the
+    Safe Mode flag. Native Mods will load on the next restart.
+  </Step>
+</Steps>
+
+## Manual Safe Mode (testing)
+
+You can arm Safe Mode proactively before installing a Native Mod you are not sure about:
+
+- A **"Start in Safe Mode next time"** action is available in **Settings → Extensions** at any time, even when Safe Mode is not currently active.
+- Use this when you expect a new or updated Native Mod might cause issues and want a safe recovery path ready before restarting.
+
+<Warning>
+  Safe Mode is a crash-loop recovery mechanism, not a security sandbox. It only
+  activates when the process crashes or is killed during mod loading. A
+  misbehaving mod that loads successfully but causes problems at runtime is not
+  contained by Safe Mode.
+</Warning>
+
+<Note>
+  Script Mods and Pi extensions are never skipped by Safe Mode. They hot-reload
+  at any time and do not risk putting the process into a crash loop at startup.
+</Note>

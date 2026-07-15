@@ -1,0 +1,76 @@
+---
+title: "Host Methods: Direct Android Bridge for Aether Extensions"
+sidebarTitle: "Host Methods"
+description: "Use aether.host.invoke() to call Android host methods for app control, draft management, session navigation, model switching, and Alpine runtime execution."
+---
+
+`aether.host.invoke()` provides direct access to Android-side operations that aren't yet covered by the state API or service registry. Use it for app-specific tasks like sending messages, opening screens, or executing Alpine commands.
+
+## API signature
+
+```typescript
+readonly host: {
+  invoke(method: string, args?: object): Promise<object>;
+};
+```
+
+## Host methods reference
+
+| Method | Purpose |
+|---|---|
+| `app.getState` | Read settings, sessions, draft, Skills, and runtime UI state |
+| `app.setDraftInput` | Replace the composer text |
+| `app.appendDraftInput` | Append text to the composer |
+| `app.sendMessage` | Set optional text and submit, queue, or steer |
+| `app.newChat` | Start a new draft conversation |
+| `app.selectSession` | Select a session by ID |
+| `app.openScreen` | Open `"chat"` or `"settings"` |
+| `app.pauseGeneration` | Pause the current generation |
+| `app.setReasoningEffort` | Change reasoning effort level |
+| `app.setAgentMode` | Toggle Agent Mode on or off |
+| `app.setModel` | Select a model by key |
+| `app.notify` | Show an Android toast notification |
+| `settings.get` | Read settings and providers |
+| `settings.patch` | Patch supported settings |
+| `runtime.execute` | Execute an arbitrary Alpine/Termux command |
+
+## Code examples
+
+```typescript
+// Read the current app state
+const state = await aether.host.invoke("app.getState");
+
+// Replace composer text
+await aether.host.invoke("app.setDraftInput", { text: "Hello!" });
+
+// Send a message immediately
+await aether.host.invoke("app.sendMessage", { text: "Run the tests" });
+
+// Start a new chat
+await aether.host.invoke("app.newChat");
+
+// Navigate to settings
+await aether.host.invoke("app.openScreen", { screen: "settings" });
+
+// Execute a shell command in Alpine
+const result = await aether.host.invoke("runtime.execute", {
+  command: "ls ~/.aether/extensions",
+});
+
+// Show a toast notification
+await aether.host.invoke("app.notify", { message: "Task complete!" });
+
+// Toggle agent mode
+await aether.host.invoke("app.setAgentMode", { enabled: true });
+
+// Switch model
+await aether.host.invoke("app.setModel", { modelKey: "gpt-4o" });
+```
+
+<Note>
+  Prefer the state API (`aether.state.patch`) and service registry (`aether.services.invoke`) for state mutations where supported. Use host methods for operations not yet covered by those APIs.
+</Note>
+
+<Tip>
+  `runtime.execute` is useful for extensions that need to run shell commands as part of their logic without involving the main agent loop.
+</Tip>

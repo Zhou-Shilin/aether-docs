@@ -1,0 +1,96 @@
+---
+title: "Build Your First Aether Extension"
+sidebarTitle: "Quickstart"
+description: "Create a minimal Aether Script Mod extension from scratch: set up the package, add a UI surface, handle an action, and install it in the app."
+---
+
+This guide walks you through creating a minimal extension that adds a button above the chat composer and inserts a preset prompt when tapped. You will use the Aether Script Mod API v2 — no Kotlin or native toolchain required.
+
+<Steps>
+  <Step title="Create the extension directory">
+    Create a new directory for your extension and move into it:
+
+    ```bash
+    mkdir my-first-extension && cd my-first-extension
+    ```
+  </Step>
+
+  <Step title="Create package.json">
+    Create a `package.json` that points Aether to your entry file:
+
+    ```json package.json
+    {
+      "name": "my-first-extension",
+      "version": "1.0.0",
+      "aether": {
+        "extensions": ["./index.ts"]
+      }
+    }
+    ```
+
+    The `aether.extensions` array tells Aether which files to load as Script Mods. You can list multiple entry files if needed, but one is enough here.
+  </Step>
+
+  <Step title="Create the extension entry file">
+    Create `index.ts` with a surface registration and an action handler:
+
+    ```typescript index.ts
+    import { defineAetherExtension, ui } from "@aether/extension-api";
+
+    export const activateAether = defineAetherExtension((aether) => {
+      // Register an action handler
+      aether.registerAction("insert-prompt", () => {
+        aether.state.patch("draft_input", "Summarize the latest changes in this repo.");
+      });
+
+      // Add a surface above the composer
+      aether.registerSurface("chat.composer.top", {
+        id: "quick-prompt",
+        render: () =>
+          ui.button("Insert summary prompt", "insert-prompt"),
+      });
+    });
+    ```
+
+    `defineAetherExtension` wraps your factory and provides full TypeScript types for the `aether` API. `registerAction` binds the string `"insert-prompt"` to a handler that writes to the `draft_input` state path. `registerSurface` injects your button into the `chat.composer.top` slot — directly above the message input field.
+  </Step>
+
+  <Step title="Zip the extension">
+    Package the directory as a zip archive:
+
+    ```bash
+    zip -r my-first-extension.zip .
+    ```
+
+    The zip must contain `package.json` and your entry file at the root level (not inside a subdirectory).
+  </Step>
+
+  <Step title="Install in Aether">
+    Open Aether → **Settings** → **Extensions** → **Import**. Select `my-first-extension.zip`. Aether extracts the package into `~/.aether/extensions` and hot-loads the extension immediately — no restart required.
+  </Step>
+
+  <Step title="Test the extension">
+    Navigate to the chat screen. You should see the **Insert summary prompt** button rendered above the composer input. Tap it — Aether calls your `insert-prompt` action handler, which patches `draft_input` with the preset text. The composer field fills instantly.
+
+    If the button does not appear, open Settings → Extensions and confirm your extension is listed and enabled. Check the error log on that screen for any load-time issues.
+  </Step>
+</Steps>
+
+## Next steps
+
+Extend your mod further with the full Script Mod API:
+
+<CardGroup cols={2}>
+  <Card title="UI Surfaces" icon="layer-group" href="/extensions/api/surfaces">
+    Register content in additional chat and settings slots, or replace built-in Compose components entirely.
+  </Card>
+  <Card title="State API" icon="database" href="/extensions/api/state">
+    Read and write app state paths including `draft_input`, `selected_skill_ids`, `agent_mode_enabled`, and more.
+  </Card>
+  <Card title="Pages" icon="file" href="/extensions/api/pages">
+    Add full-screen drawer pages with native Compose layouts driven entirely from TypeScript.
+  </Card>
+  <Card title="Native Mods" icon="microchip" href="/extensions/native/overview">
+    Unlock full Android and Compose access by writing Kotlin DEX mods that load at process startup.
+  </Card>
+</CardGroup>

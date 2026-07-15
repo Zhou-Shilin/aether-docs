@@ -1,0 +1,232 @@
+---
+title: "Combined Pi and Aether Extension: Walkthrough"
+sidebarTitle: "Combined Extension"
+description: "A complete walkthrough of the aether-extension example — a single package combining Pi agent commands with Aether UI surfaces, pages, storage, and event hooks."
+---
+
+The `examples/aether-extension` package in the Aether repository demonstrates how to combine Pi agent-level tools with Aether UI extensions in a single package. This walkthrough covers every part of the example: the package manifest, the Pi factory, the Aether factory, surface and page registration, storage, and the `before_send` event hook.
+
+## What this extension does
+
+- Registers a Pi `/aether-example` command that notifies the agent when the extension is active
+- Adds a card surface above the composer with a live counter button and a prompt prefill action
+- Adds a full-screen drawer page ("Extension dashboard") with a persistent count card and an embedded WebView
+- Bridges the WebView back to extension actions via `Aether.postMessage`
+- Persists the counter value in extension storage across sessions
+- Hooks into the `before_send` event to strip a `!raw ` prefix from outgoing messages
+
+## Package declaration
+
+The `package.json` lists the same `index.ts` entry point under both `pi.extensions` and `aether.extensions`, so a single file powers both the Pi agent side and the Aether UI side:
+
+```json
+{
+  "name": "aether-combined-extension-example",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "aether": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}
+```
+
+## Full annotated code walkthrough
+
+### 1. Imports and `defineAetherExtension`
+
+```ts
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import {
+  defineAetherExtension,
+  ui,
+} from "@aether/extension-api";
+```
+
+- `ExtensionAPI` types the `pi` argument in the Pi factory (default export).
+- `defineAetherExtension` wraps the Aether factory and provides type-safe access to the `aether` context object.
+- `ui` is the declarative UI builder used in every `render` callback.
+
+---
+
+### 2. The Pi factory (default export): registering `/aether-example`
+
+```ts
+export default function activatePi(pi: ExtensionAPI) {
+  pi.registerCommand("aether-example", {
+    description: "Show that the package is also active in Pi",
+    handler: async (_args, context) => {
+      context.ui.notify("The combined extension is active.", "info");
+    },
+  });
+}
+```
+
+Aether loads this as a standard Pi extension because the file is declared under `pi.extensions`. You export the Pi factory as the **default export**. The handler does nothing more than fire an info notification — it is a minimal proof that the Pi and Aether sides of the package are live simultaneously.
+
+---
+
+### 3. The Aether factory (`activateAether`): counter action + prefill action
+
+```ts
+export const activateAether = defineAetherExtension((aether) => {
+  aether.registerAction("increment", async () => {
+    const count = aether.storage.get("count", 0) + 1;
+    aether.storage.set("count", count);
+    await aether.host.invoke("app.notify", {
+      message: `Extension count: ${count}`,
+    });
+  });
+
+  aether.registerAction("prefill", async () => {
+    await aether.host.invoke("app.setDraftInput", {
+      text: "Summarize the current workspace and suggest the next three tasks.",
+    });
+  });
+  // ...
+});
+```
+
+You export the Aether factory as **`activateAether`** (a named export). Aether discovers it because the file is also listed under `aether.extensions`.
+
+- **`increment`** reads the current `count` from `aether.storage` (defaulting to `0`), increments it, writes it back, then shows an Android toast via `aether.host.invoke("app.notify", ...)`. Because `storage` is synchronous and persisted in `~/.aether/app-extension-state.json`, the value survives hot reloads and app restarts.
+- **`prefill`** uses `app.setDraftInput` to replace the composer text with a ready-made prompt. You can trigger this from any button in the UI by passing the action ID `"prefill"`.
+
+---
+
+### 4. Surface registration at `chat.composer.top`
+
+```ts
+aether.registerSurface("chat.composer.top", {
+  id: "quick-tools",
+  order: 10,
+  render: ({ storage, is_running }) =>
+    ui.card([
+      ui.row([
+        ui.text("Combined extension", {
+          style: "label",
+          weight: "semibold",
+        }),
+        ui.text(is_running ? "Agent running" : "Ready", {
+          color: "muted",
+        }),
+      ], {
+        arrangement: "space-between",
+        verticalAlignment: "center",
+      }),
+      ui.row([
+        ui.button(`Count ${storage.count ?? 0}`, "increment", {
+          tone: "neutral",
+        }),
+        ui.button("Prefill", "prefill"),
+        ui.node("pageButton", {
+          page: "dashboard",
+          label: "Dashboard",
+          icon: "code",
+          width: "fill",
+        }),
+      ], {
+        wrap: true,
+        rowSpacing: 8,
+      }),
+    ], {
+      radius: 22,
+    }),
+});
+```
+
+`registerSurface` attaches content to the `chat.composer.top` slot — directly above the text input. Key points:
+
+- **`order: 10`** — controls stacking order when multiple extensions register the same slot.
+- **`render` context** — receives live app state. `storage` holds your extension's persisted key/value pairs; `is_running` reflects whether the agent is currently generating.
+- **`ui.card`** — wraps all content in a rounded card. `radius: 22` rounds the corners more aggressively to match the composer shape.
+- **`ui.row` with `arrangement: "space-between"`** — stretches the label and status text to opposite ends.
+- **`ui.row` with `wrap: true`** — the three buttons wrap onto a second line on narrow screens; `rowSpacing: 8` adds vertical breathing room between lines.
+- **`ui.node("pageButton", { page: "dashboard", ... })`** — a special button type that navigates to the registered page with ID `"dashboard"`. It opens the page in the conversation drawer.
+
+---
+
+### 5. Page registration with WebView and action bridge
+
+```ts
+aether.registerPage({
+  id: "dashboard",
+  title: "Extension dashboard",
+  subtitle: "Native Compose and trusted TypeScript",
+  icon: "code",
+  render: ({ storage }) =>
+    ui.column([
+      ui.text("Aether Extension API", {
+        style: "headline",
+        weight: "bold",
+      }),
+      ui.card([
+        ui.text(`Persistent count: ${storage.count ?? 0}`),
+        ui.button("Increment", "increment"),
+      ]),
+      ui.web({
+        height: 180,
+        radius: 22,
+        html: `
+          <!doctype html>
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body { margin: 0; padding: 18px; color: white; background: #202124;
+                   font: 15px system-ui; }
+            button { border: 0; border-radius: 14px; padding: 12px 16px;
+                     background: #8ea2ff; color: #111318; font-weight: 700; }
+          </style>
+          <h3>Extension WebView</h3>
+          <button onclick='Aether.postMessage(JSON.stringify({
+            action: "increment",
+            args: { source: "web" }
+          }))'>Increment through JavaScript</button>
+        `,
+      }),
+    ], {
+      scroll: true,
+      spacing: 14,
+    }),
+});
+```
+
+`registerPage` creates a full-screen destination that Aether automatically lists in the conversation drawer. Points to note:
+
+- **`id: "dashboard"`** — this string must match the `page` field on the `pageButton` node registered in the surface above.
+- **`render` context** — receives the same app state object as surfaces. `storage.count` reads the persisted counter.
+- **`ui.web`** — injects an arbitrary HTML document into a native Android `WebView`. JavaScript, DOM storage, and network access are all enabled inside the WebView.
+- **`Aether.postMessage(JSON.stringify({ action, args }))`** — the only bridge from WebView JavaScript back to extension logic. When the user taps "Increment through JavaScript", the WebView posts a message that Aether routes to the registered `increment` action. You can pass arbitrary `args` in the JSON object; the action handler receives them as its first argument.
+- **`ui.column` with `scroll: true`** — makes the page body vertically scrollable when content overflows the screen.
+
+---
+
+### 6. The `before_send` event hook
+
+```ts
+aether.on("before_send", ({ text }) => {
+  if (String(text).startsWith("!raw ")) {
+    return { text: String(text).slice(5) };
+  }
+  return undefined;
+});
+```
+
+`aether.on("before_send", handler)` fires immediately before the user's message is submitted to the model. The handler receives the draft payload and may return a partial object to merge back in. Here, any message beginning with `!raw ` has that prefix stripped before dispatch. Returning `undefined` (or nothing) leaves the payload unchanged.
+
+## Installation
+
+1. Zip the `examples/aether-extension` directory into a `.zip` archive.
+2. Open Aether on your Android device.
+3. Go to **Settings → Extensions → Import**.
+4. Select the zip file. Aether extracts it to `~/.aether/extensions` and hot-loads the Script side immediately.
+
+<Tip>
+Read through this example alongside the Script Mod API docs for surfaces, pages, storage, and events to understand how the pieces fit together. The combined extension is intentionally minimal — every capability it uses is independently composable, so you can copy individual sections (e.g., just the `before_send` hook, or just the surface) into a new package without any of the other parts.
+</Tip>

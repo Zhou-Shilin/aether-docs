@@ -1,0 +1,157 @@
+{
+  "projectType": "saas",
+  "projectName": "Aether",
+  "projectDescription": "A stunning, localized AI Agent app for Android that supports multiple LLM providers, built-in Alpine Linux runtime, and a powerful extension/mod system for TypeScript and Kotlin developers.",
+  "theme": "almond",
+  "primaryColor": "#fc48a1",
+  "lightColor": "#fc80c2",
+  "darkColor": null,
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "User Guide",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/models-providers",
+              "features/agent-mode",
+              "features/skills-mcp",
+              "features/alpine-runtime",
+              "features/termux-shizuku"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/settings",
+              "configuration/providers",
+              "configuration/scheduled-tasks"
+            ]
+          },
+          {
+            "group": "Help",
+            "pages": [
+              "help/faq",
+              "help/troubleshooting"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Extension Developer",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "extensions/overview",
+              "extensions/package-format",
+              "extensions/quickstart"
+            ]
+          },
+          {
+            "group": "Script Mod API",
+            "pages": [
+              "extensions/api/surfaces",
+              "extensions/api/components",
+              "extensions/api/pages",
+              "extensions/api/state",
+              "extensions/api/services",
+              "extensions/api/events-intercept",
+              "extensions/api/storage",
+              "extensions/api/host-methods"
+            ]
+          },
+          {
+            "group": "UI Reference",
+            "pages": [
+              "extensions/ui/declarative-ui",
+              "extensions/ui/webview"
+            ]
+          },
+          {
+            "group": "Native Mods",
+            "pages": [
+              "extensions/native/overview",
+              "extensions/native/services",
+              "extensions/native/interceptors",
+              "extensions/native/compose",
+              "extensions/native/safe-mode"
+            ]
+          },
+          {
+            "group": "Pi Extensions",
+            "pages": [
+              "extensions/pi/overview",
+              "extensions/pi/tools-commands"
+            ]
+          },
+          {
+            "group": "Examples",
+            "pages": [
+              "extensions/examples/combined-extension",
+              "extensions/examples/global-skills-mod"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Multi-provider LLM support (OpenAI, Anthropic, Google, DeepSeek, Groq, Mistral, Cloudflare, and more)",
+    "Built-in Alpine Linux VM for shell command and tool execution",
+    "Termux and Shizuku integration for Android device automation",
+    "Hot-reloadable TypeScript/JavaScript Script Mod API v2",
+    "Native Kotlin/DEX Mod system for full Android and Compose access",
+    "Declarative UI system for extension-provided surfaces and component replacement",
+    "Pi agent framework integration with tool, command, and hook registration",
+    "Persistent per-extension storage and global app state transactions",
+    "Operation interception chain (chat.new, skills.selection)",
+    "Discoverable service registry with priority-based override support",
+    "WebView escape hatch for HTML micro-UIs inside extensions",
+    "Native Mod Safe Mode for crash-loop recovery"
+  ],
+  "publicApiSurface": [
+    "AetherExtensionAPI.registerSurface(slot, definition)",
+    "AetherExtensionAPI.registerComponent(target, definition)",
+    "AetherExtensionAPI.registerPage(definition)",
+    "AetherExtensionAPI.registerAction(id, handler)",
+    "AetherExtensionAPI.on(event, handler)",
+    "AetherExtensionAPI.intercept(operation, handler)",
+    "AetherExtensionAPI.state.get(path?)",
+    "AetherExtensionAPI.state.patch(path, value)",
+    "AetherExtensionAPI.state.transaction(operations)",
+    "AetherExtensionAPI.storage.get/set/delete/clear/snapshot()",
+    "AetherExtensionAPI.host.invoke(method, args?)",
+    "AetherExtensionAPI.services.list/describe/invoke()",
+    "AetherExtensionAPI.notify(message, level?)",
+    "AetherExtensionAPI.invalidate()",
+    "defineAetherExtension(factory)",
+    "ui.text / ui.code / ui.column / ui.row / ui.box / ui.scroll / ui.card",
+    "ui.button / ui.iconButton / ui.switch / ui.input / ui.spacer / ui.progress",
+    "ui.pageButton / ui.web / ui.core",
+    "AetherNativeMod.onLoad(context) / onUnload()",
+    "AetherNativeModContext.registerService(id, priority, methods, handler)",
+    "AetherNativeModContext.intercept(operation, priority, handler)",
+    "AetherNativeModContext.registerComponent(target, id, mode, priority, renderer)",
+    "host method: app.getState / app.setDraftInput / app.appendDraftInput / app.sendMessage",
+    "host method: app.newChat / app.selectSession / app.openScreen / app.pauseGeneration",
+    "host method: app.setReasoningEffort / app.setAgentMode / app.setModel / app.notify",
+    "host method: settings.get / settings.patch / runtime.execute",
+    "service: skills.list / skills.getSelection / skills.setSelection / skills.setSelected",
+    "service: state.get / state.transaction",
+    "state paths: draft_input, selected_skill_ids, default_skill_ids, agent_mode_enabled, selected_model_key, screen",
+    "UI surface slots: app.overlay, chat.top, chat.empty, chat.list.start, chat.list.end, chat.composer.top, settings.hub, drawer",
+    "Component targets: app.content, chat.screen, settings.screen, chat.composer.actionTray, chat.composer.skillPicker",
+    "Operations: chat.new, skills.selection",
+    "Package format fields: pi.extensions[], aether.extensions[], aether.native.{classpath, libraryPath, entrypoints}"
+  ]
+}

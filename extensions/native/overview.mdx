@@ -1,0 +1,103 @@
+---
+title: "Native Kotlin/DEX Mods: Full Android Access for Aether"
+sidebarTitle: "Overview"
+description: "Build Native Mods for Aether in Kotlin compiled to DEX, with direct access to Android APIs, Jetpack Compose, the mod kernel, and Aether internals."
+---
+
+Native Mods are Kotlin classes compiled to DEX that load directly into the Aether process. They provide the deepest level of extension capability — direct access to Android APIs, Jetpack Compose, and every Aether internal.
+
+## When to use Native Mods
+
+Choose a Native Mod over a Script Mod when you need any of the following:
+
+- **Register a new service implementation** — replace or augment Aether's built-in services through the priority-ordered service registry.
+- **Wrap or replace Compose components with full Compose code** — Script components use a declarative UI tree; Native components give you unrestricted Jetpack Compose.
+- **Access Android platform APIs** not exposed through host methods — `Context`, `PackageManager`, platform sensors, etc.
+- **Performance-critical operations** that benefit from compiled, optimized Kotlin running directly in the app process.
+- **Wildcard operation interception** (`"*"`) — intercept every operation dispatched through the mod kernel.
+
+## The `AetherNativeMod` interface
+
+Every Native Mod entry class implements this interface:
+
+```kotlin
+interface AetherNativeMod {
+    fun onLoad(context: AetherNativeModContext)
+    fun onUnload()
+}
+```
+
+`onLoad` is called once when the mod is loaded at process startup. `onUnload` is called when the mod is programmatically removed (currently reserved for future unload support).
+
+## AetherNativeModContext
+
+The `context` parameter passed to `onLoad` is your gateway to everything the mod kernel exposes:
+
+| Property / Method | Type | Description |
+|---|---|---|
+| `application` | `Application` | The Android `Application` instance for the Aether process. |
+| `modId` | `String` | The package name of this mod (from `package.json` `name`). |
+| `packageRoot` | `File` | Root directory of the extension package on disk. |
+| `classLoader` | `ClassLoader` | The `DexClassLoader` used to load this mod. |
+| `kernel` | `AetherModKernel` | The full mod kernel — services, operations, and components registries. |
+| `diagnosticLogger` | `AetherDiagnosticLogger` | Aether's internal diagnostic logger. |
+| `registerService()` | method | Convenience method — registers a service in `kernel.services`. |
+| `intercept()` | method | Convenience method — registers an operation interceptor in `kernel.operations`. |
+| `registerComponent()` | method | Convenience method — registers a Compose component in `kernel.components`. |
+
+## DEX compilation requirements
+
+Aether uses Android's `DexClassLoader` to load Native Mod code. Keep these constraints in mind:
+
+- `DexClassLoader` accepts `.dex`, `.apk`, or jar/zip files containing `classes.dex`.
+- A plain JVM `.class` jar is **not** sufficient — run Android **D8** or **R8** on your compiled output to produce a DEX artifact.
+- Compose renderers must be compiled with a **Compose compiler version compatible with the target Aether build**.
+- Rebuild native mods when Aether implementation classes or the Kotlin/Compose toolchain changes. This coupling is intentional and analogous to version-specific Minecraft mods.
+
+## Classpath format in package.json
+
+Declare your DEX artifact, optional native library directories, and entry class names under `aether.native` in `package.json`:
+
+```json package.json
+{
+  "name": "my-native-mod",
+  "version": "1.0.0",
+  "aether": {
+    "native": {
+      "classpath": ["./native/mod.dex"],
+      "libraryPath": ["./native/lib"],
+      "entrypoints": ["com.example.aether.MyNativeMod"]
+    }
+  }
+}
+```
+
+- **`classpath`** — one or more `.dex`, `.apk`, or DEX-containing zip/jar paths relative to the package root.
+- **`libraryPath`** — optional directories containing `.so` native libraries.
+- **`entrypoints`** — fully-qualified class names that implement `AetherNativeMod`. Multiple entrypoints in one package are all loaded.
+
+## Minimal example
+
+```kotlin MyNativeMod.kt
+class MyNativeMod : AetherNativeMod {
+    override fun onLoad(context: AetherNativeModContext) {
+        context.diagnosticLogger.info("MyNativeMod loaded for: ${context.modId}")
+    }
+
+    override fun onUnload() {
+        // clean up
+    }
+}
+```
+
+<Warning>
+  Native Mods are the unrestricted tier. They can use reflection, JNI, and
+  access Aether implementation classes directly. There is no permission sandbox.
+  Install only Native Mods you trust completely.
+</Warning>
+
+<Note>
+  Native Mods load on process start. Installing, updating, removing, or
+  changing a Native Mod requires restarting Aether before the change takes
+  effect.
+</Note>

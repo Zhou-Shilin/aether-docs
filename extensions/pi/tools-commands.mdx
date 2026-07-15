@@ -1,0 +1,183 @@
+---
+title: "Pi Extension Tools and Commands Reference"
+sidebarTitle: "Tools & Commands"
+description: "Register custom agent tools and slash commands in Aether's Pi extension layer. Includes handler signatures, context, and a working example."
+---
+
+Pi extension tools and commands are the primary way to extend what the Aether agent can do. Tools are called by the LLM during an agent turn; commands are invoked by the user with a `/` prefix.
+
+## Registering a command
+
+Use `pi.registerCommand` to add a slash command. The `handler` receives the parsed arguments and a context object that exposes, among other things, `ctx.ui.notify` for surfacing feedback to the user.
+
+```typescript agent.ts
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+
+export default function activate(pi: ExtensionAPI) {
+  pi.registerCommand("my-command", {
+    description: "A custom command",
+    handler: async (args, ctx) => {
+      ctx.ui.notify("Command ran!", "info");
+    },
+  });
+}
+```
+
+## Registering a tool
+
+Use `pi.registerTool` to expose a callable function to the LLM. Provide a JSON-Schema `parameters` block so the model knows what arguments to supply, and return any serialisable value from the `handler`.
+
+<Tip>
+  Name tools descriptively — the LLM reads the `description` field to decide
+  when to invoke a tool, so a precise, action-oriented description directly
+  affects how reliably the tool is used.
+</Tip>
+
+```typescript agent.ts
+export default function activate(pi: ExtensionAPI) {
+  pi.registerTool("fetch-weather", {
+    description: "Fetch current weather for a city",
+    parameters: {
+      type: "object",
+      properties: {
+        city: { type: "string", description: "City name" },
+      },
+      required: ["city"],
+    },
+    handler: async ({ city }) => {
+      // your logic here
+      return { temperature: 22, condition: "sunny", city };
+    },
+  });
+}
+```
+
+<Note>
+  Pi tools registered by an extension become available to the LLM in every
+  agent turn where the extension is loaded.
+</Note>
+
+## Combined Pi + Aether extension
+
+A single package can serve both Pi (agent tools and commands) and Aether (Android UI and app logic). Keep the Pi factory as the `default` export and export the Aether factory as `activateAether`. The example below is drawn directly from the bundled `aether-extension` sample.
+
+```typescript agent.ts
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { defineAetherExtension, ui } from "@aether/extension-api";
+
+// Pi side — default export
+export default function activatePi(pi: ExtensionAPI) {
+  pi.registerCommand("aether-example", {
+    description: "Show that the package is also active in Pi",
+    handler: async (_args, context) => {
+      context.ui.notify("The combined extension is active.", "info");
+    },
+  });
+}
+
+// Aether side — named export consumed by the Android host
+export const activateAether = defineAetherExtension((aether) => {
+  // Persistent counter action
+  aether.registerAction("increment", async () => {
+    const count = aether.storage.get("count", 0) + 1;
+    aether.storage.set("count", count);
+    await aether.host.invoke("app.notify", {
+      message: `Extension count: ${count}`,
+    });
+  });
+
+  // Prefill the composer with a prompt
+  aether.registerAction("prefill", async () => {
+    await aether.host.invoke("app.setDraftInput", {
+      text: "Summarize the current workspace and suggest the next three tasks.",
+    });
+  });
+
+  // Surface a card directly above the composer
+  aether.registerSurface("chat.composer.top", {
+    id: "quick-tools",
+    order: 10,
+    render: ({ storage, is_running }) =>
+      ui.card(
+        [
+          ui.row(
+            [
+              ui.text("Combined extension", {
+                style: "label",
+                weight: "semibold",
+              }),
+              ui.text(is_running ? "Agent running" : "Ready", {
+                color: "muted",
+              }),
+            ],
+            { arrangement: "space-between", verticalAlignment: "center" }
+          ),
+          ui.row(
+            [
+              ui.button(`Count ${storage.count ?? 0}`, "increment", {
+                tone: "neutral",
+              }),
+              ui.button("Prefill", "prefill"),
+              ui.node("pageButton", {
+                page: "dashboard",
+                label: "Dashboard",
+                icon: "code",
+                width: "fill",
+              }),
+            ],
+            { wrap: true, rowSpacing: 8 }
+          ),
+        ],
+        { radius: 22 }
+      ),
+  });
+
+  // Full-screen extension dashboard page
+  aether.registerPage({
+    id: "dashboard",
+    title: "Extension dashboard",
+    subtitle: "Native Compose and trusted TypeScript",
+    icon: "code",
+    render: ({ storage }) =>
+      ui.column(
+        [
+          ui.text("Aether Extension API", { style: "headline", weight: "bold" }),
+          ui.card([
+            ui.text(`Persistent count: ${storage.count ?? 0}`),
+            ui.button("Increment", "increment"),
+          ]),
+          ui.web({
+            height: 180,
+            radius: 22,
+            html: `
+              <!doctype html>
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+              <style>
+                body { margin: 0; padding: 18px; color: white; background: #202124;
+                       font: 15px system-ui; }
+                button { border: 0; border-radius: 14px; padding: 12px 16px;
+                         background: #8ea2ff; color: #111318; font-weight: 700; }
+              </style>
+              <h3>Extension WebView</h3>
+              <button onclick='Aether.postMessage(JSON.stringify({
+                action: "increment",
+                args: { source: "web" }
+              }))'>Increment through JavaScript</button>
+            `,
+          }),
+        ],
+        { scroll: true, spacing: 14 }
+      ),
+  });
+
+  // Strip a "!raw " prefix before the message is sent
+  aether.on("before_send", ({ text }) => {
+    if (String(text).startsWith("!raw ")) {
+      return { text: String(text).slice(5) };
+    }
+    return undefined;
+  });
+});
+```
+
+The Pi command (`aether-example`) is active whenever the package is loaded in a Pi session. The Aether factory runs inside the Android host and has access to the full `AetherExtensionAPI` — surfaces, pages, state, storage, actions, and host bridges — while the Pi factory is limited to Pi's agent-turn API.

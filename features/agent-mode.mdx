@@ -1,0 +1,58 @@
+---
+title: "Agent Mode: Autonomous Task Execution in Aether"
+sidebarTitle: "Agent Mode"
+description: "Enable Agent Mode to let Aether autonomously execute shell commands, manage files, and complete multi-step tasks using the Alpine Linux runtime."
+---
+
+Agent Mode turns Aether into a fully autonomous agent that can run shell commands, read and write files, execute scripts, and loop through as many steps as it needs until your task is complete. Instead of a single LLM response, you get a self-driving workflow that uses tools on your behalf.
+
+## How to Enable Agent Mode
+
+Toggle the **Agent Mode** button in the chat composer bar (the lightning bolt or robot icon depending on your version). When Agent Mode is active, the indicator lights up and the agent gains access to its full suite of built-in tools. Each LLM turn can now be followed by one or more tool calls before the agent replies to you.
+
+## What Agent Mode Can Do
+
+<CardGroup cols={2}>
+  <Card title="Shell Commands" icon="terminal">
+    Run any shell command inside the built-in Alpine Linux VM — from simple utilities to long-running scripts.
+  </Card>
+  <Card title="File Management" icon="folder-open">
+    Read and write files within the Alpine filesystem, create directories, and pipe output between tools.
+  </Card>
+  <Card title="Code Execution" icon="code">
+    Execute Python, Node.js, shell scripts, and any other runtime you've installed in Alpine via `apk add`.
+  </Card>
+  <Card title="Skills & MCP" icon="puzzle-piece">
+    Call Skills and MCP servers as additional tools — web search, custom APIs, and more.
+  </Card>
+  <Card title="Android Automation" icon="mobile">
+    With Shizuku enabled, inject taps, swipes, and key events, capture screenshots, and control apps on virtual displays.
+  </Card>
+</CardGroup>
+
+## The Agentic Loop
+
+The Pi framework drives a **tool-use loop** at the core of Agent Mode:
+
+1. You send a task description.
+2. The LLM decides which tool to call and with what arguments.
+3. Aether executes the tool (shell command, file read/write, Skill call, etc.).
+4. The result is fed back into the next LLM turn as context.
+5. Steps 2–4 repeat until the LLM determines the task is complete and returns a final answer.
+
+This loop continues automatically — you don't need to prompt again between steps. The agent can run dozens of tool calls for a single complex task.
+
+## Pausing and Steering
+
+You don't have to let the agent run uninterrupted. At any point during generation you can:
+
+- **Pause**: Tap the stop button in the composer to halt the current generation immediately.
+- **Steer**: Use the **Steer** input that appears mid-generation to send a follow-up instruction. The agent incorporates your message into the ongoing context without restarting the task from scratch.
+
+<Warning>
+  Agent Mode with shell access is powerful. The agent can read and modify files anywhere in the Alpine environment. Always review the plan for long or complex tasks — especially if the task involves sensitive files, network requests, or irreversible operations — before letting it run to completion.
+</Warning>
+
+<Tip>
+  Start with simple, well-scoped tasks (e.g., "list the files in my home directory" or "write a Python script that prints the Fibonacci sequence") to get a feel for how the agent behaves before you hand it multi-step workflows.
+</Tip>
