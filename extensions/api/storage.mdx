@@ -64,7 +64,6 @@ The following example wires a persistent counter to a surface rendered above the
 aether.registerAction("increment", ({ amount = 1 }) => {
   const count = aether.storage.get("count", 0) + Number(amount);
   aether.storage.set("count", count);
-  aether.invalidate(); // trigger re-render
 });
 
 aether.registerSurface("chat.composer.top", {
@@ -78,7 +77,7 @@ aether.registerSurface("chat.composer.top", {
 ```
 
 <Note>
-  The `storage` object passed to your surface's `render` function is a snapshot taken at render time. After a storage write, call `aether.invalidate()` to trigger a fresh render with the updated snapshot.
+  The `storage` object passed to your surface's `render` function is a snapshot taken at render time. Every `storage.set()`, `storage.delete()`, and `storage.clear()` call automatically triggers a re-render — you do not need to call `aether.invalidate()` after a storage write.
 </Note>
 
 <Tip>

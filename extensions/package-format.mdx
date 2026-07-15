@@ -43,7 +43,7 @@ The example below activates all three tiers from a single package:
 </ParamField>
 
 <ParamField path="aether.extensions" type="string[]">
-  Array of paths to Aether Script Mod entry files, relative to the package root. Each file is loaded by the Aether Script Mod runtime (API v2). Export your factory as `activateAether` or `aether` (or as `default` for an Aether-only package) to register surfaces, components, pages, actions, and event handlers. Changes to these files hot-reload without restarting the app. Omit this field if your extension does not use the Script Mod API.
+  Array of paths to Aether Script Mod entry files, relative to the package root. Each file is loaded by the Aether Script Mod runtime (API v2). Export your factory as `activateAether` or `aether` to register surfaces, components, pages, actions, and event handlers. The runtime also accepts a `default` export for entries explicitly listed here (useful for packages that target only this tier). Changes to these files hot-reload without restarting the app. Omit this field if your extension does not use the Script Mod API.
 </ParamField>
 
 <ParamField path="aether.native.classpath" type="string[]">
@@ -93,7 +93,7 @@ Extension packages live under `~/.aether/extensions` inside Aether's managed Alp
 
 ## Shared Pi + Aether entry point
 
-When you share a single entry file between `pi.extensions` and `aether.extensions`, keep the Pi factory as the `default` export and export the Aether factory as `activateAether` or `aether`. The Script Mod runtime looks for `activateAether` or `aether` first; it falls back to `default` only for packages listed exclusively under `aether.extensions`.
+When you share a single entry file between `pi.extensions` and `aether.extensions`, keep the Pi factory as the `default` export and export the Aether factory as `activateAether` or `aether`. The Script Mod runtime looks for `activateAether` or `aether` first; it falls back to `default` only for entries that are explicitly listed in `aether.extensions` (as opposed to implicitly discovered files).
 
 ```typescript index.ts
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";

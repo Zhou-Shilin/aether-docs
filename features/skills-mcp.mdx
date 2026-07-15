@@ -25,7 +25,7 @@ Skills you select are **scoped to the current chat** unless you save them as def
 
 ### Setting Default Skills
 
-To automatically activate a Skill for every new chat, enable it in the Skill picker and tap **Set as Default**. Aether stores your selection in `default_skill_ids` in the app state and applies it to all new conversations going forward. You can still override defaults per chat.
+To automatically activate a Skill for every new chat, enable it in the Skill picker and tap **Set as Default**. Aether applies that selection to all new conversations going forward. You can still override defaults per chat.
 
 ## MCP Servers
 
@@ -49,7 +49,7 @@ Once added, all tools that the MCP server exposes are immediately available in t
 
 ## Managing Default Skills
 
-Use the **Skill picker** in the composer to enable or disable individual Skills per chat. The `default_skill_ids` field in the app state governs which Skills are auto-selected when you open a brand new chat. You can update defaults at any time without affecting existing conversations.
+Use the **Skill picker** in the composer to enable or disable individual Skills per chat. Your default selection is applied automatically when you open a new chat. You can update defaults at any time without affecting existing conversations.
 
 <Note>
   The **Global Skills Mod** example in the Extension Developer documentation shows you how to build an extension that programmatically manages global Skill defaults across all chats. It's a great starting point if you want to create a custom Skill management experience inside Aether.

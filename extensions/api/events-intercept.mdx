@@ -12,13 +12,7 @@ Aether extensions can subscribe to app events and intercept operations to observ
 aether.on(event: string, handler: EventHandler): () => void;
 ```
 
-`on()` registers a handler for a named event and returns a cleanup function you can call to unsubscribe. Common events include `before_send`, which fires before a chat message is submitted.
-
-```typescript
-aether.on("before_send", ({ draft_input }) => {
-  console.log("User is sending:", draft_input);
-});
-```
+`on()` registers a handler for a named event and returns a cleanup function you can call to unsubscribe. Event names are defined by Aether core or by other extensions; use `intercept()` to act on the built-in operations documented below.
 
 ## `intercept()` — operation interception
 

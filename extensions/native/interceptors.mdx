@@ -1,7 +1,7 @@
 ---
-title: "Native Operation Interceptors: Observe and Modify App Operations"
+title: "Native Operation Interceptors in Aether Kotlin Mods"
 sidebarTitle: "Interceptors"
-description: "Register native operation interceptors in Kotlin to observe, modify, or cancel Aether operations like chat.new and skills.selection, including wildcard interception."
+description: "Register Kotlin operation interceptors to observe, modify, or cancel Aether operations like chat.new and skills.selection, with full wildcard support."
 ---
 
 Native interceptors integrate into the same operation chain as Script interceptors but always run first. They can observe, modify, cancel, or replace operation payloads before any Script-level handler sees them.
@@ -14,15 +14,24 @@ Call `context.intercept()` inside `onLoad`:
 context.intercept(
     operation: String,
     priority: Int,
-    handler: (payload: JSONObject, chain: AetherModOperationChain) -> AetherModOperationDecision
+    interceptor: AetherModOperationInterceptor
 )
+```
+
+`AetherModOperationInterceptor` is a `fun interface` with one method:
+
+```kotlin
+suspend fun intercept(
+    payload: JSONObject,
+    context: JSONObject,
+): AetherModOperationDecision
 ```
 
 | Parameter | Description |
 |---|---|
 | `operation` | The operation name to intercept, or `"*"` to intercept every operation. |
 | `priority` | Higher-priority interceptors run first within the Native interceptor tier. |
-| `handler` | Lambda receiving the current `payload` and the `chain`; returns an `AetherModOperationDecision`. |
+| `interceptor` | `AetherModOperationInterceptor` receiving the current `payload` and an operation `context` object; returns an `AetherModOperationDecision`. |
 
 ## Decision types
 
@@ -31,8 +40,8 @@ Your handler must return an `AetherModOperationDecision` that tells the chain wh
 | Decision | Effect |
 |---|---|
 | `AetherModOperationDecision(payload = ...)` | Pass the operation through with a modified payload. |
-| `AetherModOperationDecision(cancel = true, reason = "...")` | Cancel the operation. No further interceptors or built-in handlers run. |
-| `null` / empty decision | Pass through with the payload unchanged. |
+| `AetherModOperationDecision(cancelled = true, reason = "...")` | Cancel the operation. No further interceptors or built-in handlers run. |
+| `AetherModOperationDecision(payload = payload)` | Pass through with the payload unchanged. |
 
 You can also use the `context.cancelOperation()` extension function as a shorthand:
 
@@ -68,7 +77,7 @@ Log every operation without modifying it:
 ```kotlin
 context.intercept("*", priority = 100) { payload, _ ->
     Log.d("MyMod", "Operation: ${payload}")
-    null // pass through unchanged
+    AetherModOperationDecision(payload = payload) // pass through unchanged
 }
 ```
 

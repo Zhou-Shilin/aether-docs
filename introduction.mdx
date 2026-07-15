@@ -4,7 +4,7 @@ sidebarTitle: "Introduction"
 description: "Aether brings a full-featured, locally-run AI agent to your Android device. Learn what sets it apart from other AI chat apps."
 ---
 
-**Aether** is a general-purpose AI Agent for Android built on the [Pi framework](https://github.com/Zhou-Shilin/Aether). It pairs a minimalist, carefully polished UI with a powerful agentic execution engine that supports multiple LLM providers out of the box. Whether you want a capable AI chat companion or a fully autonomous on-device agent that can run shell commands and control your phone, Aether handles both.
+**Aether** is a general-purpose AI Agent for Android built on the Pi framework. It pairs a minimalist, carefully polished UI with a powerful agentic execution engine that supports multiple LLM providers out of the box. Whether you want a capable AI chat companion or a fully autonomous on-device agent that can run shell commands and control your phone, Aether handles both.
 
 ## What Aether is NOT
 
@@ -13,16 +13,16 @@ Aether is **not** a cloud service, and it is not a wrapper around a single AI pr
 ## Key features
 
 <CardGroup cols={2}>
-  <Card title="Multi-Provider LLM Support" icon="brain">
+  <Card title="Multi-Provider LLM Support" icon="brain" href="/features/models-providers">
     Connect to OpenAI, Anthropic, Google, DeepSeek, Groq, Mistral, Cloudflare, and more — all from a single app. Switch providers and models without leaving the chat screen.
   </Card>
-  <Card title="Built-in Alpine Linux VM" icon="terminal">
+  <Card title="Built-in Alpine Linux VM" icon="terminal" href="/features/alpine-runtime">
     A managed Alpine Linux environment is automatically installed on first use. Aether calls shell commands and CLI tools directly through this environment, giving the agent real compute power on your device.
   </Card>
-  <Card title="Termux & Shizuku" icon="mobile">
+  <Card title="Termux & Shizuku" icon="mobile" href="/features/termux-shizuku">
     Optionally integrate with Termux for direct Android shell access or Shizuku for privileged system operations — enabling deep device automation without root.
   </Card>
-  <Card title="Extension System" icon="puzzle-piece">
+  <Card title="Extension System" icon="puzzle-piece" href="/extensions/overview">
     Extend Aether with hot-reload TypeScript mods for rapid iteration or compiled Kotlin/DEX native mods for full platform power. A single extension package can augment the Pi agent and inject native Compose or WebView UI into the app.
   </Card>
 </CardGroup>

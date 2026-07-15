@@ -1,7 +1,7 @@
 ---
 title: "Installing Aether on Android"
 sidebarTitle: "Installation"
-description: "Download and install Aether on your Android 13+ device. Learn about build flavors, required permissions, and optional integrations."
+description: "Download and install Aether on your Android 8.0+ device. Learn about build flavors, required permissions, and optional integrations."
 ---
 
 Aether is distributed as an APK file and is not available on the Google Play Store. Installation is manual — you download the APK directly from GitHub and install it yourself. This page walks you through everything you need to know.
@@ -10,7 +10,7 @@ Aether is distributed as an APK file and is not available on the Google Play Sto
 
 | Requirement | Detail |
 |---|---|
-| **Android version** | Android 13 or higher (minSdk 26) |
+| **Android version** | Android 8.0 (API 26) or higher |
 | **Architecture** | arm64-v8a only |
 | **Free storage** | ~200 MB (app binary + Alpine Linux rootfs) |
 | **Internet connection** | Required for LLM API calls |
@@ -47,9 +47,14 @@ Aether requests the following permissions during onboarding or at runtime:
 
 | Permission | Purpose |
 |---|---|
+| `INTERNET` | Allows Aether to reach LLM provider API endpoints |
 | `POST_NOTIFICATIONS` | Sends notifications when agent tasks complete or require your attention |
 | `FOREGROUND_SERVICE` | Keeps agent tasks running in the background while you use other apps |
+| `FOREGROUND_SERVICE_DATA_SYNC` | Classifies the foreground service as a data-sync task (required by Android for background execution) |
 | `SCHEDULE_EXACT_ALARM` | Enables scheduled and time-triggered agent tasks |
+| `USE_EXACT_ALARM` | Allows scheduling exact alarms on devices that restrict `SCHEDULE_EXACT_ALARM` |
+| `RECEIVE_BOOT_COMPLETED` | Reschedules pending tasks automatically after your device restarts |
+| `REQUEST_INSTALL_PACKAGES` | Allows Aether to prompt you to install extension packages |
 | `com.termux.permission.RUN_COMMAND` | **Optional.** Required to run commands inside a Termux session for Android shell integration |
 | `moe.shizuku.manager.permission.API_V23` | **Optional.** Required for Shizuku integration, which enables privileged system operations in Agent Mode |
 

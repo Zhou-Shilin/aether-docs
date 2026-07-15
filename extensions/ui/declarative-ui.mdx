@@ -204,12 +204,24 @@ ui.card([
 
 ---
 
-#### `ui.pageButton(pageId, opts?)`
+#### `ui.node("pageButton", opts)`
 
-A navigation button that opens the registered page with the given `id` when tapped.
+A navigation button that opens the registered page with the given `id` when tapped. Use `ui.node("pageButton", { page, label?, icon?, width? })` — there is no dedicated `ui.pageButton` factory function.
+
+| Option | Type | Description |
+|---|---|---|
+| `page` | `string` | The `id` of the page registered with `registerPage`. |
+| `label` | `string` | Button label text. |
+| `icon` | `string` | Optional icon name. |
+| `width` | `string \| number` | Width override, e.g. `"fill"` to expand the button. |
 
 ```typescript
-ui.pageButton("dashboard") // navigates to the page registered with id "dashboard"
+ui.node("pageButton", {
+  page: "dashboard",
+  label: "Dashboard",
+  icon: "code",
+  width: "fill",
+})
 ```
 
 ---

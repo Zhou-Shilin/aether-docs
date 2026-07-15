@@ -13,18 +13,26 @@ Call `context.registerService()` inside `onLoad`:
 ```kotlin
 context.registerService(
     id: String,
-    priority: Int,
+    description: String = "",
+    priority: Int = 100,
     methods: List<AetherModServiceMethod>,
-    handler: (method: String, args: JSONObject) -> JSONObject
+    handler: AetherModServiceHandler
 )
+```
+
+`AetherModServiceHandler` is a `fun interface` with one suspend method:
+
+```kotlin
+suspend fun invoke(method: String, args: JSONObject): JSONObject
 ```
 
 | Parameter | Description |
 |---|---|
 | `id` | The service identifier (e.g. `"skills"`, `"state"`, or a custom string). |
-| `priority` | Higher value wins. Aether core services use a deliberately low priority. |
-| `methods` | The list of `AetherModServiceMethod` names this implementation handles. |
-| `handler` | Lambda invoked with the method name and a `JSONObject` of arguments; returns a `JSONObject` result. |
+| `description` | Optional human-readable description of the service (defaults to `""`). |
+| `priority` | Higher value wins. Aether core services use a deliberately low priority. Defaults to `100`. |
+| `methods` | The list of `AetherModServiceMethod` instances describing the methods this implementation handles. |
+| `handler` | `AetherModServiceHandler` invoked with the method name and a `JSONObject` of arguments; returns a `JSONObject` result. |
 
 ## Priority rules
 

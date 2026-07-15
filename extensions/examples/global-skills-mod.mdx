@@ -4,7 +4,7 @@ sidebarTitle: "Global Skills Mod"
 description: "The global-skills-mod example shows how to replace Aether's composer tray, manage global Skill defaults, and build a custom Skills management page."
 ---
 
-The `examples/global-skills-mod` package is the reference implementation for global, persistent Skill selection across chats. It originated from Aether issue #27 and demonstrates combining UI replacement, native service calls, and operation interception in a single Script Mod — no Native Mod required.
+The `examples/global-skills-mod` package is the reference implementation for global, persistent Skill selection across chats. It originated from Aether issue #27 and demonstrates combining UI replacement with native service calls in a single Script Mod — no Native Mod required.
 
 ## What this mod does
 
@@ -13,7 +13,6 @@ The `examples/global-skills-mod` package is the reference implementation for glo
 - Reads the full Skill catalog from Aether's native `skills` service
 - Writes individual Skill toggles back via `skills.setSelected` and writes bulk selections via `skills.setSelection`
 - Persists the expand/collapse state in extension storage
-- Intercepts `chat.new` to apply the current global defaults to every new chat automatically
 - Adds a "Global Skills" full-screen page to the conversation drawer for dedicated management
 
 ## Package declaration
@@ -259,7 +258,7 @@ aether.registerAction("clear", async () => {
 
 ---
 
-### 7. Persisting defaults in `storage` and applying them via `chat.new` intercept
+### 7. Persisting the expand/collapse preference in `storage`
 
 The expand/collapse preference is the only value written to `storage`:
 
@@ -269,23 +268,12 @@ aether.registerAction("toggle-expanded", ({ expanded }) => {
 });
 ```
 
-Because Skill selections are written directly into native state via `setSelected` / `setSelection`, there is no need to mirror them in extension storage. Aether's native `skills` service persists default selections on its own.
-
-To apply those defaults to every new chat automatically, the mod intercepts the `chat.new` operation:
-
-```ts
-aether.intercept("chat.new", ({ selected_skill_ids }) => ({
-  selected_skill_ids,
-}));
-```
-
-`aether.intercept("chat.new", handler)` fires before a new conversation is created. The handler receives the operation payload — which already includes the current `selected_skill_ids` derived from the native default selection — and returns that same value. This ensures the new chat is seeded with the global defaults without any additional logic. Returning a top-level field merges it into the chained payload.
+Because Skill selections are written directly into native state via `setSelected` / `setSelection`, there is no need to mirror them in extension storage. Aether's native `skills` service persists default selections on its own. The tray reads `context.storage.expanded` on every render to restore the correct collapsed or expanded state across sessions.
 
 ## Key patterns demonstrated
 
 - **Combining `registerComponent` (replace + hide) with `registerPage`** — you can suppress a built-in UI element entirely while simultaneously substituting your own replacement and adding a dedicated management page, all from a single `activateAether` factory call.
 - **Using `aether.services.invoke("skills", ...)` for real native state** — rather than maintaining a shadow copy of Skill data in extension storage, the mod reads from and writes to the actual native `skills` service. This means the selections are always consistent with what the rest of Aether sees.
-- **Using `aether.intercept("chat.new", ...)` to seed every new chat with global defaults** — operation interception lets you modify the payload of built-in operations before they execute, making it straightforward to enforce invariants across every new conversation.
 - **`aether.invalidate()` after storage writes to trigger surface re-renders** — if you write to `storage` inside an action handler and want surfaces to reflect the new value immediately, call `aether.invalidate()` after the write. In this mod, `toggle-expanded` updates `storage.expanded` and the framework re-renders the tray automatically; explicit `invalidate()` calls would be needed if storage writes happened outside an action registered with Aether.
 
 <Note>

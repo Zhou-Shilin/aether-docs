@@ -1,7 +1,7 @@
 ---
 title: "registerPage: Add Full-Screen Pages to Aether's Drawer"
 sidebarTitle: "Pages"
-description: "Use registerPage to add extension-owned full-screen destinations that appear automatically in Aether's conversation drawer."
+description: "Use registerPage to create extension-owned full-screen destinations that appear in Aether's conversation drawer and can host any declarative UI tree."
 ---
 
 Pages are full-screen destinations your extension owns. They appear automatically in the conversation drawer and can contain any declarative UI tree — including a WebView for unrestricted HTML micro-UIs. Use pages for dashboards, settings panels, or complex interactions that don't fit in a surface slot.
@@ -29,7 +29,7 @@ aether.registerPage(definition: PageDefinition): () => void;
 </ParamField>
 
 <ParamField path="icon" type="string">
-  Icon name displayed next to the title in the drawer. Aether uses the [Lucide](https://lucide.dev/icons/) icon set. Defaults to `"extension"` when omitted.
+  Icon name displayed next to the title in the drawer. Defaults to `"extension"` when omitted.
 </ParamField>
 
 <ParamField path="render" type="function" required>

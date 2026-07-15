@@ -36,7 +36,7 @@ The `context` parameter passed to `onLoad` is your gateway to everything the mod
 | Property / Method | Type | Description |
 |---|---|---|
 | `application` | `Application` | The Android `Application` instance for the Aether process. |
-| `modId` | `String` | The package name of this mod (from `package.json` `name`). |
+| `modId` | `String` | Stable identifier for this entrypoint — `"<package-name>:<entrypoint-class>"`. |
 | `packageRoot` | `File` | Root directory of the extension package on disk. |
 | `classLoader` | `ClassLoader` | The `DexClassLoader` used to load this mod. |
 | `kernel` | `AetherModKernel` | The full mod kernel — services, operations, and components registries. |
