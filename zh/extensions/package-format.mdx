@@ -1,0 +1,122 @@
+---
+title: "Aether 扩展包格式与 package.json 字段"
+sidebarTitle: "包格式"
+description: "了解 Aether 扩展的 package.json 结构，包括 pi.extensions、aether.extensions 与 aether.native 字段及可运行示例。"
+---
+
+Aether 扩展包是一个目录（或 zip 归档），其中包含声明各层入口文件的 `package.json`。Aether 在加载时读取该清单，以发现 Pi Agent 层、Script Mod 运行时与原生 DEX 加载器的入口。只需提供你所使用层级相关的字段 — 未使用的层级字段可直接省略。
+
+## 完整 package.json 示例
+
+下面的示例在单个包中启用全部三层：
+
+```json package.json
+{
+  "name": "my-aether-mod",
+  "version": "1.0.0",
+  "pi": {
+    "extensions": ["./agent.ts"]
+  },
+  "aether": {
+    "extensions": ["./android.ts"],
+    "native": {
+      "classpath": ["./native/mod.dex"],
+      "libraryPath": ["./native/lib"],
+      "entrypoints": ["com.example.aether.MyNativeMod"]
+    }
+  }
+}
+```
+
+## 字段参考
+
+<ParamField path="name" type="string">
+  用于标识扩展的 npm 风格包名。使用小写字母、数字与连字符（例如 `my-aether-mod` 或 `@myorg/chat-enhancer`）。Aether 在扩展列表中使用该名称，并据此生成稳定的扩展 ID；若省略，则回退为包目录名。
+</ParamField>
+
+<ParamField path="version" type="string">
+  [semver](https://semver.org/) 版本字符串（例如 `1.0.0`）。发布更新时递增该值，以便 Aether 与包管理器跟踪变更。
+</ParamField>
+
+<ParamField path="pi.extensions" type="string[]">
+  Pi 扩展入口文件路径数组，相对于包根目录。每个文件由 Pi Coding Agent 运行时加载。以 `default` 导出工厂函数以注册 Pi 命令、工具与钩子。若扩展不面向 Pi Agent 层，可省略此字段。
+</ParamField>
+
+<ParamField path="aether.extensions" type="string[]">
+  Aether Script Mod 入口文件路径数组，相对于包根目录。每个文件由 Aether Script Mod 运行时（API v2）加载。以 `activateAether` 或 `aether` 导出工厂函数，以注册表面、组件、页面、操作与事件处理程序。对于明确列在此处的条目，运行时也接受 `default` 导出（适用于仅面向此层的包）。在触发扩展重载时，这些文件会重新加载，无需重启应用。若扩展不使用 Script Mod API，可省略此字段。
+</ParamField>
+
+<ParamField path="aether.native.classpath" type="string[]">
+  包含已编译 `classes.dex` 的 `.dex`、`.apk` 或 jar/zip 文件路径数组，相对于包根目录。Aether 在进程启动时将这些路径传给 `DexClassLoader`。普通 JVM `.class` jar 不够 — 请先对编译输出运行 Android D8/R8。若扩展不包含 Native Mod，请省略整个 `aether.native` 对象。
+</ParamField>
+
+<ParamField path="aether.native.libraryPath" type="string[]">
+  包含 `.so` 原生库的目录路径数组，相对于包根目录。加载 DEX classpath 时，Aether 会将这些目录加入原生库搜索路径。仅当 Native Mod 使用 JNI 库时才需要。
+</ParamField>
+
+<ParamField path="aether.native.entrypoints" type="string[]">
+  实现 `AetherNativeMod` 的 Kotlin 类的全限定名数组。Aether 通过 DEX classloader 实例化每个类，并在进程启动时调用 `onLoad(context)`。需要 `aether.native.classpath` 中包含已编译的类。
+</ParamField>
+
+## 仅脚本包与仅原生包
+
+**仅脚本（Script-only）** 包完全省略 `aether.native` 对象。这是最常见的扩展格式，可在不重启 Aether 的情况下重载：
+
+```json package.json
+{
+  "name": "my-script-mod",
+  "version": "1.0.0",
+  "aether": {
+    "extensions": ["./index.ts"]
+  }
+}
+```
+
+**仅原生（Native-only）** zip 包可同时省略 `pi` 字段以及 `aether` 下的 `extensions` 字段。只需包含 `aether.native`：
+
+```json package.json
+{
+  "name": "my-native-mod",
+  "version": "1.0.0",
+  "aether": {
+    "native": {
+      "classpath": ["./build/mod.dex"],
+      "entrypoints": ["com.example.aether.MyNativeMod"]
+    }
+  }
+}
+```
+
+## 安装位置
+
+导入的扩展包位于 Aether 管理的 Alpine 文件系统中的 `~/.aether/extensions`。通过 设置 → 扩展 → **导入扩展** 导入 zip 时，Aether 会将包解压到该目录下的子目录中。通过 Aether 包管理安装的包由 Pi 包管理器发现。
+
+## 共享 Pi + Aether 入口
+
+当 `pi.extensions` 与 `aether.extensions` 共享同一入口文件时，请将 Pi 工厂保留为 `default` 导出，并将 Aether 工厂导出为 `activateAether` 或 `aether`。Script Mod 运行时会优先查找 `activateAether` 或 `aether`；仅当条目明确列在 `aether.extensions` 中时（而非隐式发现的文件），才会回退到 `default`。
+
+```typescript index.ts
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { defineAetherExtension, ui } from "@aether/extension-api";
+
+export default function activatePi(pi: ExtensionAPI) {
+  pi.registerCommand("hello", {
+    description: "Pi-compatible command",
+    handler: async (_args, ctx) => ctx.ui.notify("Hello from Pi", "info"),
+  });
+}
+
+export const activateAether = defineAetherExtension((aether) => {
+  aether.registerSurface("chat.composer.top", {
+    id: "hello",
+    render: () => ui.button("Insert prompt", "insert"),
+  });
+  aether.registerAction("insert", () =>
+    aether.state.patch("draft_input", "Explain this repository.")
+  );
+});
+```
+
+<Note>
+  `defineAetherExtension` 辅助函数为 `aether` 参数提供 TypeScript 类型，运行时是空操作 — 它只是原样返回你传入的工厂函数。从 `@aether/extension-api` 导入即可。
+</Note>

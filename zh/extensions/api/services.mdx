@@ -1,0 +1,86 @@
+---
+title: "Service Registry：调用与检查 Aether 服务"
+sidebarTitle: "Services"
+description: "使用 services API 列出、描述并调用 Aether 内置服务 — 包括 skills 与 state — 以及从 Native Mod 中替换它们。"
+---
+
+Aether 暴露可发现的服务注册表，你的扩展可在运行时查询与调用。你可从任意扩展直接调用如 `skills` 等内置服务，并在编写 Native Mod 时注册更高优先级的实现以完全替换默认实现。
+
+## API 参考
+
+```typescript
+readonly services: {
+  list(): Promise<object>;
+  describe(service: string): Promise<object>;
+  invoke(service: string, method: string, args?: object): Promise<object>;
+};
+```
+
+## 列出可用服务
+
+调用 `services.list()` 获取已注册服务的完整目录：
+
+```typescript
+const catalog = await aether.services.list();
+```
+
+## 描述服务
+
+使用服务 ID 调用 `services.describe()` 以检查其可用方法与元数据：
+
+```typescript
+const skillsApi = await aether.services.describe("skills");
+```
+
+## 内置服务
+
+### `skills` 服务
+
+`skills` 服务暴露 Aether 原生的 Skill 选择状态。
+
+| 方法 | 参数 | 说明 |
+|---|---|---|
+| `list` | — | 返回所有已安装 Skills |
+| `getSelection` | — | 返回当前选中的 Skill ID |
+| `setSelection` | `{ ids, scope, session_id? }` | 设置完整选择 |
+| `setSelected` | `{ skill_id, selected, scope, session_id? }` | 切换单个 Skill |
+
+**Scope 取值：** `"current"`、`"default"` / `"global"`、`"both"` / `"current_and_default"`。使用 `"both"` 会分别更新当前会话选择与默认选择。
+
+```typescript
+// List all skills
+const skills = await aether.services.invoke("skills", "list");
+
+// Get currently selected skills
+const selection = await aether.services.invoke("skills", "getSelection");
+
+// Enable a skill for the current chat
+await aether.services.invoke("skills", "setSelected", {
+  skill_id: "web-search",
+  selected: true,
+  scope: "current",
+});
+
+// Set default skills for all new chats
+await aether.services.invoke("skills", "setSelection", {
+  ids: ["web-search", "code-interpreter"],
+  scope: "default",
+});
+```
+
+### `state` 服务
+
+`state` 服务提供对 Aether 应用状态的直接读取与事务性写入。
+
+| 方法 | 参数 | 说明 |
+|---|---|---|
+| `get` | `{ path }` | 读取路径上的状态 |
+| `transaction` | `{ operations }` | 应用状态变更 |
+
+## 优先级系统
+
+服务按优先级排序。给定服务 ID 的活动实现始终是最高优先级的注册。移除某次注册后，次高优先级的实现会成为活动实现。Aether 核心服务有意使用较低优先级，因此以默认 Native Mod 优先级注册同一服务 ID 的 Native Mod 会无缝覆盖内置行为。
+
+<Note>
+  Script Mods 可使用 `aether.services.invoke()` 调用任何已注册服务，但不能注册新的服务实现。要覆盖内置服务或添加新服务，必须使用 Native Mod。
+</Note>

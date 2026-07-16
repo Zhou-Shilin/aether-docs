@@ -1,0 +1,59 @@
+---
+title: "Pi Agent 扩展：为 Aether 添加工具与命令"
+sidebarTitle: "概述"
+description: "构建 Pi 扩展，添加在 Aether 的 Pi 框架 agent 循环中运行的自定义 agent 工具、斜杠命令与会话钩子。"
+---
+
+Pi 扩展接入驱动 Aether 的 agent 执行引擎。它们添加 agent 在回合中可调用的自定义工具、用户可直接调用的斜杠命令，以及会话生命周期钩子 — 全部在 Pi 框架的 agent 循环内运行。
+
+## 什么是 Pi 扩展？
+
+Aether 运行在 Pi agent 框架（`@earendil-works/pi-agent-core`、`@earendil-works/pi-coding-agent`）之上。Pi 扩展是标准的 Pi 框架扩展，可完整访问在 Aether 内运行的 agent 循环。由于它们在 Node.js 桥接进程中执行，因此拥有完整的 Node.js 运行时，以及 Pi 框架的工具调用与命令分发基础设施。
+
+## 声明 Pi 扩展
+
+在 `package.json` 中添加 `pi.extensions` 数组，指向一个或多个入口文件：
+
+```json package.json
+{
+  "name": "my-pi-extension",
+  "version": "1.0.0",
+  "pi": {
+    "extensions": ["./agent.ts"]
+  }
+}
+```
+
+扩展激活时，Pi 框架会加载每个入口文件。
+
+## Pi 扩展工厂
+
+入口文件必须导出一个 **默认函数**，由 Pi 框架以 `ExtensionAPI` 实例调用：
+
+```typescript agent.ts
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+
+export default function activate(pi: ExtensionAPI) {
+  // Register tools, commands, and hooks here
+}
+```
+
+工厂可以是同步的，也可以是 `async`。使用 `pi` 参数注册扩展提供的一切。
+
+## Pi 与 Aether 扩展对比
+
+单个包可同时包含 Pi 扩展与 Aether Script Mod。它们承担不同角色：
+
+| | Pi extension | Aether Script Mod |
+|---|---|---|
+| **运行时** | Node.js 桥接进程 | Android 应用进程（JS 桥接） |
+| **主要职责** | Agent 工具、命令、agent 循环钩子 | Android UI surface、组件替换、宿主 API 访问 |
+| **入口导出** | 默认导出（`activate`） | 命名导出（`activateAether` 或 `aether`） |
+| **重载** | 触发扩展重载时重载 | 触发扩展重载时重载 |
+
+当你需要在同一包中同时具备 agent 循环能力与 Android UI 定制时，将 Pi 工厂保留为默认导出，并将 Aether 工厂导出为 `activateAether`。组合示例见 [工具与命令](/zh/extensions/pi/tools-commands)。
+
+<Note>
+  Pi 框架 API（`ExtensionAPI`）由 `@earendil-works/pi-coding-agent` 包定义。完整
+  API 表面（含会话钩子、流式传输与高级工具选项）请参阅 Pi 框架文档。
+</Note>

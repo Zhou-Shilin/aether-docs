@@ -1,0 +1,125 @@
+---
+title: "WebView 节点：在 Aether 扩展页面中嵌入 HTML 微 UI"
+sidebarTitle: "WebView"
+description: "使用 ui.web() 在任意 Aether 扩展 surface 或 page 中嵌入功能完整的 WebView，并通过 Aether.postMessage 实现双向通信。"
+---
+
+当声明式节点类型不够用时，`ui.web()` 可在 surface 或 page 中直接嵌入真正的 Android WebView，从而使用完整的 HTML、CSS 与 JavaScript 技术栈。适用于自定义可视化、丰富布局，或原生节点集合无法覆盖的任意交互模型。
+
+## API 签名
+
+```typescript
+ui.web(opts: WebNodeOptions)
+```
+
+## 选项
+
+<ParamField body="html" type="string">
+  省略 `url` 时，在 WebView 内渲染的完整 HTML 内容。这是完整的 HTML 文档字符串 — 请包含 `<!DOCTYPE html>` 与 `<body>`，以便在各 Android 版本上稳定渲染。
+</ParamField>
+
+<ParamField body="url" type="string">
+  要加载的 URL，用于替代内联 `html` 内容。
+</ParamField>
+
+<ParamField body="height" type="number">
+  以 dp 表示的显式高度。默认为 `240`。
+</ParamField>
+
+---
+
+## WebView 中默认启用的能力
+
+每个 `ui.web()` WebView 默认启用以下能力：
+
+- **JavaScript 执行** — `<script>` 标签与内联处理器可正常运行。
+- **DOM 存储** — 可使用 `localStorage` 与 `sessionStorage`。
+- **网络访问** — fetch、XMLHttpRequest 与 WebSocket 可连接远程主机。
+- **文件访问** — WebView 可读取本地文件系统。
+- **内容访问** — Android `content://` URI 可正确解析。
+
+---
+
+## 双向通信 — `Aether.postMessage`
+
+Aether 会向每个 WebView 注入全局 `Aether` 对象。在 JavaScript 中调用 `Aether.postMessage(jsonString)` 可触发已注册的扩展 action：
+
+```javascript
+Aether.postMessage(JSON.stringify({
+  action: "actionId",
+  args: { key: "value" }
+}));
+```
+
+消息必须是 JSON 序列化后的字符串。顶层 `action` 字段指定要调用的已注册 action；`args` 是可选对象，会作为载荷转发给 action 处理器。
+
+---
+
+## 完整示例 — 带 action 桥接的 WebView
+
+```typescript index.ts
+import { defineAetherExtension, ui } from "@aether/extension-api";
+
+export const activateAether = defineAetherExtension((aether) => {
+  aether.registerAction("web-clicked", ({ source }) => {
+    aether.notify(`Clicked from: ${source}`, "info");
+  });
+
+  aether.registerPage({
+    id: "web-panel",
+    title: "Web Panel",
+    icon: "globe",
+    render: () =>
+      ui.web({
+        height: 320,
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <body style="font-family:sans-serif;padding:16px">
+            <h2>Hello from WebView</h2>
+            <button onclick='Aether.postMessage(JSON.stringify({
+              action: "web-clicked",
+              args: { source: "button" }
+            }))'>Click me</button>
+          </body>
+          </html>
+        `,
+      }),
+  });
+});
+```
+
+用户点击按钮时，WebView 调用 `Aether.postMessage`，从而触发扩展中注册的 `"web-clicked"` action。Action 处理器接收 `{ source: "button" }` 作为载荷，并显示通知 toast。
+
+---
+
+## 注入动态数据
+
+由于 `html` 是普通 JavaScript 字符串，你可以在渲染时从 `storage`、`state` 或任意 render 上下文字段插值：
+
+```typescript
+render: ({ storage }) =>
+  ui.web({
+    height: 200,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <body style="font-family:sans-serif;padding:16px">
+        <h3>Count: ${storage.count ?? 0}</h3>
+      </body>
+      </html>
+    `,
+  }),
+```
+
+扩展状态失效时，Aether 会再次调用 `render`，因此 WebView 内容会与扩展的持久化 storage 保持同步。
+
+---
+
+<Warning>
+WebView 拥有完整网络访问权限，并启用了文件与内容访问。不要渲染不受信任的 HTML 内容，也不要在未评估安全影响的情况下解析外部 URL。若攻击者能影响 `html` 的值，即可执行任意 JavaScript，并通过 `Aether.postMessage` 桥接调用该扩展注册的 action。
+</Warning>
+
+<Tip>
+凡是需要触发扩展逻辑的交互 — 状态更新、通知、导航或服务调用 — 都应使用 `Aether.postMessage`。消息必须是包含 `action` 字段与可选 `args` 对象的 JSON 字符串。`postMessage` 没有返回值；storage 写入会自动触发重渲染，`aether.invalidate()` 可用于刷新非 storage 状态。
+</Tip>

@@ -1,0 +1,188 @@
+---
+title: "Pi 扩展工具与命令：完整 API 参考"
+sidebarTitle: "工具与命令"
+description: "在 Aether 的 Pi 扩展层注册自定义 agent 工具与斜杠命令。包含处理器签名、上下文以及可运行示例。"
+---
+
+Pi 扩展工具与命令是扩展 Aether agent 能力的主要方式。工具由 LLM 在 agent 回合中调用；命令由用户以 `/` 前缀触发。
+
+## 注册命令
+
+使用 `pi.registerCommand` 添加斜杠命令。`handler` 接收解析后的参数与上下文对象，该对象除其他能力外，还通过 `ctx.ui.notify` 向用户展示反馈。
+
+```typescript agent.ts
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+
+export default function activate(pi: ExtensionAPI) {
+  pi.registerCommand("my-command", {
+    description: "A custom command",
+    handler: async (args, ctx) => {
+      ctx.ui.notify("Command ran!", "info");
+    },
+  });
+}
+```
+
+## 注册工具
+
+使用 `pi.registerTool` 向 LLM 暴露可调用函数。提供 TypeBox `parameters` schema，以便模型知道应传入哪些参数，并从 `execute` 返回 `AgentToolResult`。
+
+<Tip>
+  请为工具起描述性名称 — LLM 会阅读 `description` 字段以决定何时调用工具，因此
+  精确、面向动作的描述会直接影响工具被可靠使用的程度。
+</Tip>
+
+```typescript agent.ts
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { Type } from "typebox";
+
+export default function activate(pi: ExtensionAPI) {
+  pi.registerTool({
+    name: "fetch-weather",
+    label: "Fetch weather",
+    description: "Fetch current weather for a city",
+    parameters: Type.Object({
+      city: Type.String({ description: "City name" }),
+    }),
+    execute: async (_toolCallId, { city }) => {
+      // your logic here
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({ temperature: 22, condition: "sunny", city }),
+        }],
+        details: {},
+      };
+    },
+  });
+}
+```
+
+<Note>
+  扩展注册的 Pi 工具，在该扩展已加载的每一次 agent 回合中，都可供 LLM 使用。
+</Note>
+
+## 组合 Pi + Aether 扩展
+
+单个包可同时服务 Pi（agent 工具与命令）与 Aether（Android UI 与应用逻辑）。将 Pi 工厂保留为 `default` 导出，并将 Aether 工厂导出为 `activateAether`。下面的示例直接取自捆绑的 `aether-extension` 示例。
+
+```typescript agent.ts
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { defineAetherExtension, ui } from "@aether/extension-api";
+
+// Pi side — default export
+export default function activatePi(pi: ExtensionAPI) {
+  pi.registerCommand("aether-example", {
+    description: "Show that the package is also active in Pi",
+    handler: async (_args, context) => {
+      context.ui.notify("The combined extension is active.", "info");
+    },
+  });
+}
+
+// Aether side — named export consumed by the Android host
+export const activateAether = defineAetherExtension((aether) => {
+  // Persistent counter action
+  aether.registerAction("increment", async () => {
+    const count = aether.storage.get("count", 0) + 1;
+    aether.storage.set("count", count);
+    await aether.host.invoke("app.notify", {
+      message: `Extension count: ${count}`,
+    });
+  });
+
+  // Prefill the composer with a prompt
+  aether.registerAction("prefill", async () => {
+    await aether.host.invoke("app.setDraftInput", {
+      text: "Summarize the current workspace and suggest the next three tasks.",
+    });
+  });
+
+  // Surface a card directly above the composer
+  aether.registerSurface("chat.composer.top", {
+    id: "quick-tools",
+    order: 10,
+    render: ({ storage, is_running }) =>
+      ui.card(
+        [
+          ui.row(
+            [
+              ui.text("Combined extension", {
+                style: "label",
+                weight: "semibold",
+              }),
+              ui.text(is_running ? "Agent running" : "Ready", {
+                color: "muted",
+              }),
+            ],
+            { arrangement: "space-between", verticalAlignment: "center" }
+          ),
+          ui.row(
+            [
+              ui.button(`Count ${storage.count ?? 0}`, "increment", {
+                tone: "neutral",
+              }),
+              ui.button("Prefill", "prefill"),
+              ui.node("pageButton", {
+                page: "dashboard",
+                label: "Dashboard",
+                icon: "code",
+                width: "fill",
+              }),
+            ],
+            { wrap: true, rowSpacing: 8 }
+          ),
+        ],
+        { radius: 22 }
+      ),
+  });
+
+  // Full-screen extension dashboard page
+  aether.registerPage({
+    id: "dashboard",
+    title: "Extension dashboard",
+    subtitle: "Native Compose and trusted TypeScript",
+    icon: "code",
+    render: ({ storage }) =>
+      ui.column(
+        [
+          ui.text("Aether Extension API", { style: "headline", weight: "bold" }),
+          ui.card([
+            ui.text(`Persistent count: ${storage.count ?? 0}`),
+            ui.button("Increment", "increment"),
+          ]),
+          ui.web({
+            height: 180,
+            radius: 22,
+            html: `
+              <!doctype html>
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+              <style>
+                body { margin: 0; padding: 18px; color: white; background: #202124;
+                       font: 15px system-ui; }
+                button { border: 0; border-radius: 14px; padding: 12px 16px;
+                         background: #8ea2ff; color: #111318; font-weight: 700; }
+              </style>
+              <h3>Extension WebView</h3>
+              <button onclick='Aether.postMessage(JSON.stringify({
+                action: "increment",
+                args: { source: "web" }
+              }))'>Increment through JavaScript</button>
+            `,
+          }),
+        ],
+        { scroll: true, spacing: 14 }
+      ),
+  });
+
+  // Strip a "!raw " prefix before the message is sent
+  aether.on("before_send", ({ text }) => {
+    if (String(text).startsWith("!raw ")) {
+      return { text: String(text).slice(5) };
+    }
+    return undefined;
+  });
+});
+```
+
+只要包在 Pi 会话中加载，Pi 命令（`aether-example`）就会处于活跃状态。Aether 工厂在 Android 宿主中运行，可访问完整的 `AetherExtensionAPI` — surfaces、pages、state、storage、actions 与宿主桥接 — 而 Pi 工厂仅限于 Pi 的 agent 回合 API。

@@ -1,0 +1,81 @@
+---
+title: "registerPage：向 Aether 抽屉添加全屏页面"
+sidebarTitle: "Pages"
+description: "使用 registerPage 创建由扩展拥有的全屏目的地，出现在 Aether 对话抽屉中，并可承载任意声明式 UI 树。"
+---
+
+Pages 是你的扩展拥有的全屏目的地。它们会自动出现在对话抽屉中，并可包含任意声明式 UI 树 — 包括用于不受限 HTML 微 UI 的 WebView。适合仪表盘、设置面板，或不适合放入 surface 插槽的复杂交互。
+
+## API 签名
+
+```typescript
+aether.registerPage(definition: PageDefinition): () => void;
+```
+
+`registerPage` 返回一个清理函数。调用它可从抽屉与导航中移除页面注册。
+
+## PageDefinition 字段
+
+<ParamField path="id" type="string" required>
+  唯一页面标识符。Aether 用它在扩展内限定页面作用域，并从 `ui.node("pageButton", { page: pageId })` 导航调用中定位页面。必须为非空字符串。
+</ParamField>
+
+<ParamField path="title" type="string" required>
+  显示在对话抽屉条目与页面标题栏中的主标签。必须为非空字符串。
+</ParamField>
+
+<ParamField path="subtitle" type="string">
+  显示在抽屉中标题下方的次要标签。可用于简要说明页面用途。
+</ParamField>
+
+<ParamField path="icon" type="string">
+  显示在抽屉中标题旁的图标名称。省略时默认为 `"extension"`。
+</ParamField>
+
+<ParamField path="render" type="function">
+  返回页面 `ui` 节点树的工厂函数。可为同步或 `async`，并接收标准渲染上下文。请使用 `render` 或 `tree` 之一。
+
+  ```typescript
+  render: (context: RenderContext) => ui node | Promise<ui node>
+  ```
+</ParamField>
+
+<ParamField path="tree" type="object">
+  省略 `render` 时使用的静态 `ui` 节点树。
+</ParamField>
+
+## 示例
+
+```typescript index.ts
+aether.registerPage({
+  id: "dashboard",
+  title: "Build dashboard",
+  subtitle: "Extension-owned UI",
+  icon: "code",
+  render: () => ui.column([
+    ui.text("Dashboard", { style: "headline" }),
+    ui.button("Run", "run"),
+  ]),
+});
+```
+
+## 导航到页面
+
+在任意 surface、component 或其他 page 中使用 `ui.node("pageButton", { page, label, icon })`，可渲染打开目标页面的导航按钮：
+
+```typescript
+aether.registerSurface("chat.composer.top", {
+  id: "open-dashboard",
+  render: () => ui.node("pageButton", {
+    page: "dashboard",
+    label: "Open dashboard",
+    icon: "code",
+  }),
+});
+```
+
+`pageId` 值必须与你传给 `registerPage` 的 `id` 字段匹配。Aether 将页面 ID 限定在注册它的扩展作用域内，因此 ID 只需在你自己的扩展内唯一。
+
+<Tip>
+  Pages 非常适合扩展设置面板、仪表盘，或不适合放入 surface 的复杂交互。由于 pages 拥有自己的全屏布局，可承载长滚动内容、多步工作流或基于 WebView 的 UI。
+</Tip>

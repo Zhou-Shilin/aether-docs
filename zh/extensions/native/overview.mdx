@@ -1,0 +1,100 @@
+---
+title: "Native Kotlin/DEX Mods：为 Aether 提供完整 Android 访问"
+sidebarTitle: "概述"
+description: "使用编译为 DEX 的 Kotlin 为 Aether 构建 Native Mods，直接访问 Android API、Jetpack Compose、mod kernel 与 Aether 内部能力。"
+---
+
+Native Mods 是编译为 DEX、直接加载到 Aether 进程中的 Kotlin 类。它们提供最深层次的扩展能力 — 直接访问 Android API、Jetpack Compose 以及所有 Aether 内部实现。
+
+## 何时使用 Native Mods
+
+在需要以下任一能力时，选择 Native Mod 而非 Script Mod：
+
+- **注册新的服务实现** — 通过按优先级排序的服务注册表替换或增强 Aether 内置服务。
+- **用完整 Compose 代码包裹或替换 Compose 组件** — Script 组件使用声明式 UI 树；Native 组件则提供不受限的 Jetpack Compose。
+- **访问宿主方法未暴露的 Android 平台 API** — `Context`、`PackageManager`、平台传感器等。
+- **对性能敏感的操作** — 受益于在应用进程中直接运行、经编译优化的 Kotlin。
+- **通配操作拦截**（`"*"`）— 拦截通过 mod kernel 分发的每一个操作。
+
+## `AetherNativeMod` 接口
+
+每个 Native Mod 入口类都实现此接口：
+
+```kotlin
+interface AetherNativeMod {
+    fun onLoad(context: AetherNativeModContext)
+    fun onUnload() = Unit
+}
+```
+
+`onLoad` 在进程启动加载 mod 时调用一次。接口定义了 `onUnload`，但当前 Native Mod 管理器不会调用它。
+
+## AetherNativeModContext
+
+传入 `onLoad` 的 `context` 参数是访问 mod kernel 全部能力的入口：
+
+| Property / Method | Type | Description |
+|---|---|---|
+| `application` | `Application` | Aether 进程的 Android `Application` 实例。 |
+| `modId` | `String` | 此入口的稳定标识 — `"<package-name>:<entrypoint-class>"`。 |
+| `packageRoot` | `File` | 磁盘上扩展包的根目录。 |
+| `classLoader` | `ClassLoader` | 用于加载此 mod 的 `DexClassLoader`。 |
+| `kernel` | `AetherModKernel` | 完整的 mod kernel — 服务、操作与组件注册表。 |
+| `diagnosticLogger` | `AetherDiagnosticLogger` | Aether 内部诊断日志记录器。 |
+| `registerService()` | method | 便捷方法 — 在 `kernel.services` 中注册服务。 |
+| `intercept()` | method | 便捷方法 — 在 `kernel.operations` 中注册操作拦截器。 |
+| `registerComponent()` | method | 便捷方法 — 在 `kernel.components` 中注册 Compose 组件。 |
+
+## DEX 编译要求
+
+Aether 使用 Android 的 `DexClassLoader` 加载 Native Mod 代码。请注意以下约束：
+
+- `DexClassLoader` 接受 `.dex`、`.apk`，或包含 `classes.dex` 的 jar/zip 文件。
+- 普通 JVM `.class` jar **不够** — 需对编译输出运行 Android **D8** 或 **R8** 以生成 DEX 产物。
+- Compose 渲染器必须使用与目标 Aether 构建**兼容的 Compose 编译器版本**编译。
+- 当 Aether 实现类或 Kotlin/Compose 工具链变更时，请重新构建 native mods。这种耦合是有意为之，类似于与版本绑定的 Minecraft mods。
+
+## package.json 中的 classpath 格式
+
+在 `package.json` 的 `aether.native` 下声明 DEX 产物、可选的原生库目录，以及入口类名：
+
+```json package.json
+{
+  "name": "my-native-mod",
+  "version": "1.0.0",
+  "aether": {
+    "native": {
+      "classpath": ["./native/mod.dex"],
+      "libraryPath": ["./native/lib"],
+      "entrypoints": ["com.example.aether.MyNativeMod"]
+    }
+  }
+}
+```
+
+- **`classpath`** — 一个或多个相对包根目录的 `.dex`、`.apk`，或包含 DEX 的 zip/jar 路径。
+- **`libraryPath`** — 可选目录，包含 `.so` 原生库。
+- **`entrypoints`** — 实现 `AetherNativeMod` 的完全限定类名。同一包中的多个入口都会被加载。
+
+## 最小示例
+
+```kotlin MyNativeMod.kt
+class MyNativeMod : AetherNativeMod {
+    override fun onLoad(context: AetherNativeModContext) {
+        context.log(
+            event = "loaded",
+            details = mapOf("mod_id" to context.modId),
+        )
+    }
+}
+```
+
+<Warning>
+  Native Mods 属于不受限制的层级。它们可以使用反射、JNI，并直接访问 Aether
+  实现类。没有权限沙箱。请只安装你完全信任的 Native Mods。
+</Warning>
+
+<Note>
+  Native Mods 在进程启动时加载。安装、更新、移除或更改 Native Mod 后，需重启
+  Aether 才会生效。
+</Note>

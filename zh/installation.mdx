@@ -1,0 +1,79 @@
+---
+title: "在 Android 上安装 Aether"
+sidebarTitle: "安装"
+description: "在 Android 8.0+ 设备上下载并安装 Aether。了解构建变体、所需权限与可选集成。"
+---
+
+Aether 以 APK 形式分发，不在 Google Play 商店上架。安装需手动完成 — 你从 GitHub 直接下载 APK 并自行安装。本页说明你需要了解的全部内容。
+
+## 系统要求
+
+| 要求 | 说明 |
+|---|---|
+| **Android 版本** | Android 8.0（API 26）或更高 |
+| **架构** | 仅 arm64-v8a |
+| **可用存储** | 约 200 MB（应用本体 + Alpine Linux rootfs） |
+| **网络连接** | 调用 LLM API 时需要 |
+
+## 下载
+
+从 [Aether GitHub Releases 页面](https://github.com/Zhou-Shilin/Aether/releases) 下载最新 APK。
+
+Aether 提供两种构建变体：
+
+- **Release** — 稳定版，推荐日常使用。以版本标签发布在 Releases 页面。
+- **Nightly** — 从 `main` 分支自动构建。包含最新功能与修复，但可能不够稳定。可从 [nightly.link](https://nightly.link/Zhou-Shilin/Aether/workflows/build-nightly-apk.yml/main/Aether-nightly.zip) 下载。Nightly 使用不同的 flavor 资源（应用名称、图标）以区分稳定版。
+
+## 安装步骤
+
+<Steps>
+  <Step title="允许安装未知来源应用">
+    进入 **设置 → 应用 → 特殊应用访问 → 安装未知应用**。在列表中找到浏览器或文件管理器，并启用 **允许来自此来源**。
+  </Step>
+  <Step title="打开已下载的 APK">
+    在「下载」文件夹（或浏览器保存位置）找到 APK 文件并点击，打开安装程序。
+  </Step>
+  <Step title="点击安装">
+    在 Android 安装提示中点击 **安装**，等待安装完成。通常只需几秒。
+  </Step>
+  <Step title="打开 Aether 并完成引导">
+    安装结束后点击 **打开**（或在应用抽屉中找到 Aether）。按引导流程授予权限并配置首个 LLM 提供商。
+  </Step>
+</Steps>
+
+## 权限
+
+Aether 会在引导流程或运行时请求以下权限：
+
+| 权限 | 用途 |
+|---|---|
+| `INTERNET` | 允许 Aether 访问 LLM 提供商 API 端点 |
+| `POST_NOTIFICATIONS` | 在 Agent 任务完成或需要你注意时发送通知 |
+| `FOREGROUND_SERVICE` | 在你使用其他应用时，保持 Agent 任务在后台运行 |
+| `FOREGROUND_SERVICE_DATA_SYNC` | 将前台服务归类为数据同步任务（Android 后台执行所需） |
+| `SCHEDULE_EXACT_ALARM` | 提高计划与定时触发 Agent 任务的时间精度 |
+| `USE_EXACT_ALARM` | 在 Android 允许的情况下，让 Aether 使用精确闹钟 |
+| `RECEIVE_BOOT_COMPLETED` | 设备重启后自动重新调度待处理任务 |
+| `REQUEST_INSTALL_PACKAGES` | 允许 Aether 通过 Android 软件包安装程序安装已下载的应用更新 |
+| `com.termux.permission.RUN_COMMAND` | **可选。** 在 Termux 会话中运行命令以实现 Android shell 集成时需要 |
+| `moe.shizuku.manager.permission.API_V23` | **可选。** 通过 Shizuku 授权 Agent 模式的隔离虚拟显示时需要 |
+
+Aether 只请求实际需要的权限。可选权限仅在你启用对应集成时才会请求。
+
+## 可选集成
+
+### Termux
+
+[Termux](https://termux.dev/) 是 Android 上的终端模拟器与 Linux 环境。与 Aether 一起安装后，Agent 可直接在 Termux 会话中运行命令 — 适合需要持久 shell 环境或 Termux 软件包的任务。
+
+建议从 [F-Droid](https://f-droid.org/en/packages/com.termux/) 安装 Termux，也可从 [GitHub Releases](https://github.com/termux/termux-app/releases) 安装。Play 商店版本不提供 Aether 所需的 `RUN_COMMAND` 集成。
+
+### Shizuku
+
+[Shizuku](https://shizuku.rikka.app/) 让应用在无需完全 root 的情况下，以提升权限使用 Android 系统 API。在 Aether 中启用 Shizuku 集成后，可授权 Agent 模式创建并控制隔离的 Android 虚拟显示。
+
+从 [Play 商店](https://play.google.com/store/apps/details?id=moe.shizuku.privileged.api) 或 [GitHub Releases](https://github.com/RikkaApps/Shizuku/releases) 安装 Shizuku。
+
+<Warning>
+  Aether **不会** 请求任何存储权限（`READ_EXTERNAL_STORAGE`、`WRITE_EXTERNAL_STORAGE` 或 `MANAGE_ALL_FILES`）。所有应用数据 — 包括 API 密钥、对话历史与扩展文件 — 仅保存在 Aether 的私有应用目录中，其他应用无法访问。
+</Warning>

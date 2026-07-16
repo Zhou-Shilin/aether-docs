@@ -1,0 +1,83 @@
+---
+title: "registerSurface：向 Aether 聊天与设置注入 UI"
+sidebarTitle: "Surfaces"
+description: "使用 registerSurface 将扩展提供的 UI 注入到 Aether 界面中的 8 个命名插槽，从输入栏上方到对话抽屉。"
+---
+
+Surfaces 让你的扩展在不替换内置组件的情况下，向 Aether 界面的预定义位置添加 UI。每次 surface 注册会定位到一个命名插槽，并贡献一棵声明式 UI 树，Aether 会在该位置与其他已注册内容一并渲染。
+
+## API 签名
+
+```typescript
+aether.registerSurface(slot: string, definition: SurfaceDefinition): () => void;
+```
+
+`registerSurface` 返回一个清理函数。调用它可移除 surface 注册并触发重新渲染。
+
+## 可用插槽
+
+| 插槽 | 位置 |
+|---|---|
+| `app.overlay` | 全应用覆盖层 |
+| `chat.top` | 聊天顶部栏下方 |
+| `chat.empty` | 空对话表面 |
+| `chat.list.start` | 已提交消息之前 |
+| `chat.list.end` | 消息与待处理工作之后 |
+| `chat.composer.top` | 输入栏正上方 |
+| `settings.hub` | 设置中心顶部 |
+| `drawer` | 对话抽屉 |
+
+## SurfaceDefinition 字段
+
+<ParamField path="id" type="string">
+  此 surface 注册的唯一标识符。Aether 用它跟踪并去重同一扩展的注册。若省略，Aether 会根据插槽与注册顺序生成一个。
+</ParamField>
+
+<ParamField path="order" type="number">
+  多个扩展注册同一插槽时控制渲染顺序。数值越小越先渲染。省略时默认为 `0`。
+</ParamField>
+
+<ParamField path="render" type="function">
+  工厂函数，接收渲染上下文并返回 `ui` 节点树。可为同步或 `async`。请使用 `render` 或 `tree` 之一。
+
+  ```typescript
+  render: (context: RenderContext) => ui node | Promise<ui node>
+  ```
+</ParamField>
+
+<ParamField path="tree" type="object">
+  省略 `render` 时使用的静态 `ui` 节点树。
+</ParamField>
+
+## 渲染上下文
+
+每次渲染周期，Aether 会向你的 `render` 函数传入包括下列字段在内的上下文：
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `is_running` | boolean | Agent 当前是否正在生成回复 |
+| `draft_input` | string | 输入栏中的当前文本 |
+| `storage` | object | 渲染时你的扩展持久化存储的快照 |
+
+## 示例
+
+```typescript index.ts
+aether.registerSurface("chat.composer.top", {
+  id: "status",
+  order: 10,
+  render: ({ is_running, draft_input, storage }) =>
+    ui.row([
+      ui.text(is_running ? "Agent running" : "Ready"),
+      ui.text(`${String(draft_input).length} chars`),
+      ui.text(`Count: ${storage.count ?? 0}`),
+    ]),
+});
+```
+
+<Note>
+  调用 `aether.invalidate()` 可在扩展内部状态变化时强制重新渲染所有 surfaces。Aether 不会在任意扩展侧变更时自动重渲染 surfaces — 仅在存储写入、action 调用与显式 invalidation 时重渲染。
+</Note>
+
+<Tip>
+  使用 `order` 确保多个扩展贡献同一插槽时，你的 surface 渲染在正确位置。相同 `order` 值的注册会按作用域 ID 稳定排序作为决胜规则。
+</Tip>

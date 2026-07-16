@@ -25,7 +25,7 @@ export default function activate(pi: ExtensionAPI) {
 
 ## Registering a tool
 
-Use `pi.registerTool` to expose a callable function to the LLM. Provide a JSON-Schema `parameters` block so the model knows what arguments to supply, and return any serialisable value from the `handler`.
+Use `pi.registerTool` to expose a callable function to the LLM. Provide a TypeBox `parameters` schema so the model knows what arguments to supply, and return an `AgentToolResult` from `execute`.
 
 <Tip>
   Name tools descriptively — the LLM reads the `description` field to decide
@@ -34,19 +34,26 @@ Use `pi.registerTool` to expose a callable function to the LLM. Provide a JSON-S
 </Tip>
 
 ```typescript agent.ts
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { Type } from "typebox";
+
 export default function activate(pi: ExtensionAPI) {
-  pi.registerTool("fetch-weather", {
+  pi.registerTool({
+    name: "fetch-weather",
+    label: "Fetch weather",
     description: "Fetch current weather for a city",
-    parameters: {
-      type: "object",
-      properties: {
-        city: { type: "string", description: "City name" },
-      },
-      required: ["city"],
-    },
-    handler: async ({ city }) => {
+    parameters: Type.Object({
+      city: Type.String({ description: "City name" }),
+    }),
+    execute: async (_toolCallId, { city }) => {
       // your logic here
-      return { temperature: 22, condition: "sunny", city };
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({ temperature: 22, condition: "sunny", city }),
+        }],
+        details: {},
+      };
     },
   });
 }

@@ -1,0 +1,78 @@
+---
+title: "Aether 常见问题排查"
+sidebarTitle: "故障排除"
+description: "修复 Aether 常见问题，包括提供商连接错误、Alpine Linux 初始化失败、Shizuku 设置问题与扩展崩溃。"
+---
+
+本页涵盖用户最常遇到的问题及解决方法。若这些步骤都无法解决问题，请在 [Aether GitHub 仓库](https://github.com/Zhou-Shilin/Aether/issues) 提交 issue，并尽量提供详细信息。
+
+<AccordionGroup>
+
+  <Accordion title="「API 密钥无效」或提供商连接错误">
+    保存密钥后 Aether 无法连接提供商时，按以下顺序排查：
+
+    1. **重新检查密钥本身** — 打开提供商控制台，重新复制密钥并粘贴。首尾多一个空格都会导致认证失败。
+    2. **确认密钥处于启用状态** — 部分提供商允许禁用或撤销单个密钥。登录提供商控制台，确认密钥为 active/enabled。
+    3. **检查账户余额或配额** — 密钥技术上有效，但若余额为零或速率限制耗尽，仍可能被拒绝。
+    4. **移除并重新添加提供商** — 进入 **设置 → 模型提供商**，完全移除该条目，再点击 **添加提供商** 重新配置。
+  </Accordion>
+
+  <Accordion title="Alpine Linux 初始化卡住">
+    Aether 首次初始化 Alpine Linux 环境时，会解压 APK 中捆绑的运行时资源。这需要足够存储，但不会下载 rootfs：
+
+    1. **保持 Aether 打开** — 设置指示可见时不要离开或强杀应用。
+    2. **至少等待 5 分钟** — 部分设备解压比预期慢。进度指示可见时不要离开或强杀应用。
+    3. **强制停止后重试** — 若 5 分钟后仍完全卡住，打开 **Android 设置 → 应用 → Aether → 强制停止**，再重新打开 Aether。它会自动恢复或重启初始化。
+    4. **释放存储空间** — 确保设备至少有 **200 MB 可用存储**。存储几乎满载时，解压可能静默失败。
+  </Accordion>
+
+  <Accordion title="Agent 模式无响应 / 虚拟显示操作失败">
+    若 Agent 模式无法操作隔离的虚拟显示：
+
+    1. **点击暂停按钮** — 每个活动的 Agent 会话在输入区都有暂停/停止控件。点击可干净中断当前运行。
+    2. **检查 Termux 设置** — 打开 **设置 → Termux**，确认命令访问与外部应用已就绪。
+    3. **检查 Agent 模式授权** — 打开 **设置 → Agent 模式**，刷新所选的 Shizuku 或 Root 授权方式。
+    4. **查看提供商状态页** — 挂起可能出在提供商一侧。检查其状态页是否有进行中的故障。
+  </Accordion>
+
+  <Accordion title="Shizuku 集成不工作">
+    若 Aether 无法连接 Shizuku 执行特权操作：
+
+    1. **确认 Shizuku 正在运行** — 打开 Shizuku 应用。主界面应显示「Shizuku is running」。若显示已停止，请通过无线调试（ADB）重新启动。
+    2. **在 Shizuku 中授予 Aether 权限** — 打开 Shizuku 应用 → **已授权应用**，确认列表中有 Aether 且已授权。若不在列表中，下次 Aether 尝试使用 Shizuku 时会提示你授权。
+    3. **重启后重新启动 Shizuku** — Shizuku 默认不会跨设备重启保持运行。手机重启后，使用依赖 Shizuku 的 Aether 功能前，请先打开 Shizuku 应用并启动服务。
+  </Accordion>
+
+  <Accordion title="Termux 集成不可用">
+    若 Termux 集成变灰或无法识别：
+
+    1. **使用正确的 Termux 发行版** — 必须从 [F-Droid](https://f-droid.org/en/packages/com.termux/) 或 [GitHub Releases](https://github.com/termux/termux-app/releases) 安装 Termux。Play 商店版 **不支持** 与其他应用集成所需的 `RUN_COMMAND` 权限。
+    2. **确认已授予权限** — 使用 **设置 → Termux** 打开 Android 应用权限界面，并允许 **在 Termux 环境中运行命令**。
+    3. **确认已启用外部应用** — 在 Termux 中运行 Aether 的设置命令，然后返回 Aether 并刷新。
+  </Accordion>
+
+  <Accordion title="扩展在启动时导致 Aether 崩溃（Native Mod 安全模式）">
+    若 Aether 启动后反复立即崩溃，很可能是 native mod（编译型 Kotlin/DEX 扩展）导致：
+
+    1. **在中断启动后重新打开 Aether** — 若启动在 native-mod 初始化与五秒 UI 稳定完成前结束，Aether 会在下次启动时进入 **Native Mod 安全模式**。此模式下会跳过所有 native mods，以便应用能启动。
+    2. **定位有问题的扩展** — 进入安全模式后，打开 **设置 → 扩展**。扩展列表会标示崩溃时正在加载的 mod。
+    3. **禁用或移除扩展** — 点击该扩展条目以禁用或完全移除。
+    4. **重新启用 Native Mods** — 移除问题扩展后，在设置 → 扩展中点击 **重新启用 Native Mods**。下次启动时 Aether 会正常加载其余 mods。
+  </Accordion>
+
+  <Accordion title="聊天记录丢失">
+    若之前的对话消失了：
+
+    1. **检查是否卸载/重装** — Aether 将聊天记录保存在私有应用存储中的本地数据库。卸载并重装会永久删除全部历史，无法从卸载中恢复。
+    2. **检查设备可用存储** — 若 Aether 运行时设备存储完全写满，数据库可能无法写入新记录。释放空间后，确认新消息现在可以正常保存。
+  </Accordion>
+
+  <Accordion title="计划任务未触发">
+    若计划任务到点从不运行：
+
+    1. **检查闹钟调度** — 若你的 Android 版本提供 **Android 设置 → 应用 → 特殊应用访问 → 闹钟和提醒**，请允许 Aether 调度精确闹钟。无法使用精确闹钟时，Aether 会回退到闹钟时钟或 allow-while-idle 调度。
+    2. **关闭 Aether 的电池优化** — 进入 **Android 设置 → 电池 → Aether → 无限制**（标签因厂商而异）。否则 Android 可能推迟或阻止后台唤醒。
+    3. **将 Aether 加入自启动或受保护应用列表** — 许多 OEM Android 变体（小米 MIUI/HyperOS、OPPO ColorOS、三星 One UI 等）在标准电池优化之外还有更激进的后台限制。在设备内置安全或电池应用中找到「自启动」「受保护应用」或「后台活动」设置，并将 Aether 加入白名单。
+  </Accordion>
+
+</AccordionGroup>

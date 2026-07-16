@@ -73,23 +73,25 @@ ui.box([
 
 ---
 
-#### `ui.scroll(children, opts?)`
+#### `ui.node("scroll", { children, ...opts })`
 
 Wraps its children in a scrollable container.
 
 ```typescript
-ui.scroll([
-  ui.text("Item 1"),
-  ui.text("Item 2"),
-  // ... many more items
-])
+ui.node("scroll", {
+  children: [
+    ui.text("Item 1"),
+    ui.text("Item 2"),
+    // ... many more items
+  ],
+})
 ```
 
 ---
 
 #### `ui.spacer(size?, opts?)`
 
-Inserts flexible space. The `size` parameter sets the spacing in dp (default: `8`).
+Inserts fixed space. The `size` parameter sets both its width and height in dp (default: `8`).
 
 ```typescript
 ui.row([
@@ -113,7 +115,7 @@ Renders a text string. Use `opts.style` to apply a typographic role:
 | `"title"` | Section or card title |
 | `"body"` | Default body copy |
 | `"caption"` | Small supplementary text |
-| `"code"` | Inline monospace text |
+| `"display"` | Display text |
 
 ```typescript
 ui.text("Hello Aether", { style: "headline" })
@@ -123,7 +125,7 @@ ui.text("Hello Aether", { style: "headline" })
 
 #### `ui.code(content, opts?)`
 
-Renders content as a monospace code block.
+Renders content as monospace text.
 
 ```typescript
 ui.code("const x = 42;")
@@ -141,13 +143,13 @@ A tappable button that fires a registered action when pressed.
 |---|---|---|
 | `args` | `object` | Arguments forwarded to the action handler. |
 | `weight` | `number` | Consume remaining horizontal space inside a row. |
-| `width` | `number` | Explicit width override in dp. |
+| `width` | `string \| number` | Width override, such as a number in dp or `"fill"`. |
 
 ```typescript
 ui.button("Run", "run-action", { args: { verbose: true } })
 ```
 
-Button labels always render on a single line. Providing `weight` or an explicit `width` overrides the default fill behavior.
+Button labels always render on a single line. Providing `weight` or an explicit `width` controls how much horizontal space the button uses.
 
 ---
 
@@ -181,10 +183,10 @@ A text input field. Pass the current string value as the first argument.
 
 | Option | Type | Description |
 |---|---|---|
-| `multiline` | `boolean` | Allow the input to expand to multiple lines. |
+| `singleLine` | `boolean` | Keep the input on one line. Defaults to `true`. |
 
 ```typescript
-ui.input(storage.query ?? "", "update-query", { multiline: false })
+ui.input(storage.query ?? "", "update-query", { singleLine: true })
 ```
 
 ---
@@ -193,7 +195,7 @@ ui.input(storage.query ?? "", "update-query", { multiline: false })
 
 #### `ui.card(children, opts?)`
 
-An elevated card container that groups related content.
+A card container that groups related content.
 
 ```typescript
 ui.card([
@@ -230,7 +232,7 @@ ui.node("pageButton", {
 
 #### `ui.progress(value?, opts?)`
 
-Renders a progress indicator. Omit `value` for an indeterminate (spinning) state; pass a `number` between `0` and `1` for a determinate bar.
+Renders a circular progress indicator. Omit `value` for an indeterminate (spinning) state; pass a `number` between `0` and `1` for determinate circular progress.
 
 ```typescript
 ui.progress()          // indeterminate
@@ -293,5 +295,5 @@ All `ui.*` factories return a plain JavaScript object — the node descriptor. A
 </Note>
 
 <Tip>
-Row children fill available width by default. Set `weight` on one child to let it expand while sibling controls keep their intrinsic size. For example, placing `{ weight: 1 }` on a button stretches it to fill the remaining row space alongside a fixed-width label.
+Rows fill the available width by default, while their children keep their intrinsic size. Set `weight` on one child to let it expand while sibling controls keep their intrinsic size. For example, placing `{ weight: 1 }` on a button stretches it to fill the remaining row space alongside a fixed-width label.
 </Tip>

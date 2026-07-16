@@ -8,7 +8,7 @@ Aether's scheduled task system lets you define recurring agent workflows that ru
 
 ## How Scheduled Tasks Work
 
-Each scheduled task has two core components: a **prompt** that tells the agent what to do, and a **schedule** that determines when to do it. At the specified time, Aether launches a background agent session using that prompt, runs the full agent loop (including any tool calls and Skill invocations), and posts a notification when the run completes. The result is saved as a regular chat session so you can review it any time.
+Each scheduled task has two core components: a **prompt** that tells the agent what to do, and a **schedule** that determines when to do it. At the specified time, Aether appends the prompt to that task's persistent chat session, runs the full agent loop using that session's model, Skills, MCP servers, and Agent Mode state, and posts a notification when completion notifications are enabled and Aether is not in the foreground.
 
 ## Creating a Task
 
@@ -23,10 +23,10 @@ Each scheduled task has two core components: a **prompt** that tells the agent w
     Enter a descriptive **task name** (for example, "Morning News Briefing") and the **prompt** you want the agent to execute when the task fires.
   </Step>
   <Step title="Set the schedule">
-    Choose how often the task should run: **daily**, **weekly**, or at a **specific time**. Use the time picker to set the exact hour and minute.
+    Choose how often the task should run: at an **interval**, **daily**, or **weekly**.
   </Step>
-  <Step title="Choose a model and Skills">
-    Select which **model** should handle this task and which **Skills** it should have access to (for example, a web-search skill for a news briefing task).
+  <Step title="Use the task's persistent chat">
+    Scheduled tasks do not have separate model or Skill selectors. After the first run, open the task's chat and choose the model, Skills, MCP servers, or Agent Mode state you want future runs to reuse.
   </Step>
   <Step title="Save the task">
     Tap **Save**. The task is now scheduled and will fire automatically at the next matching time.
@@ -35,13 +35,13 @@ Each scheduled task has two core components: a **prompt** that tells the agent w
 
 ## Viewing Task History
 
-Every completed scheduled run is saved as a full chat session in Aether's conversation history. Open the **conversation drawer** (swipe right from the chat screen or tap the menu icon) to find past runs labeled by the task name and the time they executed.
+Every scheduled task reuses a persistent chat session in Aether's conversation history. Open the **conversation drawer** (swipe right from the chat screen or tap the menu icon) to review all runs for that task in one conversation.
 
 ## Requirements for Reliable Scheduling
 
-For scheduled tasks to fire consistently, Aether needs two things from Android:
+For scheduled tasks to fire as reliably as possible, check two Android settings:
 
-1. **`SCHEDULE_EXACT_ALARM` permission** — Aether requests this during onboarding. You can verify it is granted by going to **Android Settings → Apps → Aether → Permissions**.
+1. **Alarm scheduling** — On Android versions that expose exact-alarm special access, allowing it improves timing accuracy. If exact alarms are unavailable, Aether falls back to alarm-clock or allow-while-idle scheduling.
 2. **No battery optimization** — Android's battery saver can prevent background processes from waking on time. Go to **Android Settings → Battery → Aether → Unrestricted** (wording may vary by device manufacturer) to allow Aether to run without restrictions.
 
 ---
@@ -51,5 +51,5 @@ For scheduled tasks to fire consistently, Aether needs two things from Android:
 </Tip>
 
 <Note>
-  Tasks run even when the Aether UI is in the background, as long as the app process has not been killed by the system. On OEM Android variants that aggressively manage background processes, add Aether to your device's "protected apps" or "autostart" list to ensure tasks always fire on time.
+  Tasks run even when the Aether UI is in the background. Force-stopping Aether or aggressive OEM background restrictions can still prevent them from firing. Add Aether to your device's "protected apps" or "autostart" list when needed.
 </Note>

@@ -1,0 +1,81 @@
+---
+title: "App State API：读写 Aether 全局状态"
+sidebarTitle: "State"
+description: "使用 state API 读取、修补并以事务方式修改 Aether 的公开应用状态 — 包括草稿输入、所选模型、Skills 与 Agent 模式。"
+---
+
+state API 为你的扩展提供对 Aether 公开应用状态的读写访问。可用它预填输入栏、切换 Agent 模式、更改所选模型，或管理 Skill 选择 — 全部通过在 Script Mods 中一致可用的基于路径的接口完成。
+
+## API 参考
+
+```typescript
+readonly state: {
+  get(path?: string): Promise<object>;
+  patch(path: string, value: unknown): Promise<object>;
+  transaction(operations: Array<{
+    op?: "set" | "remove";
+    path: string;
+    value?: unknown;
+  }>): Promise<object>;
+};
+```
+
+## 支持的状态路径
+
+| 路径 | 类型 | 说明 |
+|---|---|---|
+| `draft_input` | string | 当前输入栏文本 |
+| `selected_skill_ids` | string[] | 当前聊天中激活的 Skills |
+| `default_skill_ids` | string[] | 新聊天自动选中的 Skills |
+| `agent_mode_enabled` | boolean | Agent 模式是否开启 |
+| `selected_model_key` | string | 当前活动模型的 key |
+| `screen` | string | 当前屏幕（`"chat"` 或 `"settings"`） |
+
+## state.get
+
+读取完整公开状态对象，或传入路径字符串读取特定字段。解析后的值在响应的 `value` 字段中返回：
+
+```typescript
+const { value: state } = await aether.state.get();
+console.log(state.selected_model_key);
+
+// Or read a specific path
+const { value: draft } = await aether.state.get("draft_input");
+```
+
+不带参数调用 `state.get()` 会将整个公开状态快照放在 `value` 中返回。传入路径字符串则在 `value` 中返回该路径上的值。
+
+## state.patch
+
+写入单个状态路径。`patch` 是单操作事务的便捷简写：
+
+```typescript
+await aether.state.patch("draft_input", "Review the current changes.");
+```
+
+## state.transaction
+
+在一次请求中应用多个状态变更。操作按数组顺序应用：
+
+```typescript
+await aether.state.transaction([
+  { path: "draft_input", value: "Review the current changes." },
+  { path: "agent_mode_enabled", value: true },
+]);
+```
+
+省略 `op` 时，每个操作默认为 `op: "set"`。传入 `op: "remove"` 可清除受支持的路径。`selected_model_key` 与 `screen` 需要有效的替换值，不能被移除：
+
+```typescript
+await aether.state.transaction([
+  { op: "remove", path: "draft_input" },
+]);
+```
+
+<Note>
+  事务按顺序应用操作。它们提供统一的变更 API，而不是跨无关 Android 仓库的数据库级回滚。若某个操作失败，同一事务中更早的操作不会被撤销。
+</Note>
+
+<Tip>
+  需要一次更新多个路径时，优先使用 `state.transaction` 而非多次 `state.patch`。批量变更可将相关状态更新保持在单次宿主请求中。
+</Tip>

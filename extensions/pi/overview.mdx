@@ -49,7 +49,7 @@ A single package can contain both a Pi extension and an Aether Script Mod. They 
 | **Runtime** | Node.js bridge process | Android app process (JS bridge) |
 | **Primary role** | Agent tools, commands, agent loop hooks | Android UI surfaces, component replacement, host API access |
 | **Entry export** | Default export (`activate`) | Named export (`activateAether` or `aether`) |
-| **Reload** | Hot-reloads with Script Mods | Hot-reloads |
+| **Reload** | Reloads when an extension reload is triggered | Reloads when an extension reload is triggered |
 
 When you need both agent-loop capabilities and Android UI customisation in one package, keep the Pi factory as the default export and export the Aether factory as `activateAether`. See [Tools & Commands](/extensions/pi/tools-commands) for a combined example.
 

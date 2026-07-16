@@ -1,10 +1,10 @@
 ---
 title: "Host Methods: Direct Android Bridge for Aether Extensions"
 sidebarTitle: "Host Methods"
-description: "Use aether.host.invoke() to call Android host methods for app control, draft management, session navigation, model switching, and Alpine runtime execution."
+description: "Use aether.host.invoke() to call Android host methods for app control, draft management, session navigation, model switching, and Alpine or Termux runtime execution."
 ---
 
-`aether.host.invoke()` provides direct access to Android-side operations that aren't yet covered by the state API or service registry. Use it for app-specific tasks like sending messages, opening screens, or executing Alpine commands.
+`aether.host.invoke()` provides direct access to Android-side operations that aren't yet covered by the state API or service registry. Use it for app-specific tasks like sending messages, opening screens, or executing Alpine or Termux commands.
 
 ## API signature
 
@@ -55,6 +55,7 @@ await aether.host.invoke("app.openScreen", { screen: "settings" });
 // Execute a shell command in Alpine
 const result = await aether.host.invoke("runtime.execute", {
   command: "ls ~/.aether/extensions",
+  environment: "alpine",
 });
 
 // Show a toast notification
@@ -64,7 +65,9 @@ await aether.host.invoke("app.notify", { message: "Task complete!" });
 await aether.host.invoke("app.setAgentMode", { enabled: true });
 
 // Switch model
-await aether.host.invoke("app.setModel", { modelKey: "gpt-4o" });
+await aether.host.invoke("app.setModel", {
+  model_key: "<provider-config-id>::<model-id>",
+});
 ```
 
 <Note>

@@ -56,12 +56,10 @@ class MyNativeMod : AetherNativeMod {
             }
         }
     }
-
-    override fun onUnload() { /* cleanup */ }
 }
 ```
 
-`context.registerService()` returns a cleanup lambda. Call it to unregister the service before the mod is unloaded, or let `onUnload` handle it automatically.
+`context.registerService()` returns a cleanup lambda. Retain and call it yourself if you need to unregister the service at runtime; the current Native Mod manager does not invoke `onUnload`.
 
 ## Built-in services
 

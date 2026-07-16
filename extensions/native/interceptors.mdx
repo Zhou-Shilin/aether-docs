@@ -30,7 +30,7 @@ suspend fun intercept(
 | Parameter | Description |
 |---|---|
 | `operation` | The operation name to intercept, or `"*"` to intercept every operation. |
-| `priority` | Higher-priority interceptors run first within the Native interceptor tier. |
+| `priority` | Lower-priority interceptors run first within the Native interceptor tier. |
 | `interceptor` | `AetherModOperationInterceptor` receiving the current `payload` and an operation `context` object; returns an `AetherModOperationDecision`. |
 
 ## Decision types
@@ -95,7 +95,7 @@ context.intercept("skills.selection", priority = 500) { payload, _ ->
             reason = "This skill is locked by MyNativeMod.",
         )
     } else {
-        null
+        AetherModOperationDecision(payload = payload)
     }
 }
 ```
@@ -103,5 +103,5 @@ context.intercept("skills.selection", priority = 500) { payload, _ ->
 <Note>
   Native interceptors run before Script interceptors for the same operation and
   priority. Within the Native tier, interceptors are ordered by their `priority`
-  value — higher values run first.
+  value — lower values run first.
 </Note>

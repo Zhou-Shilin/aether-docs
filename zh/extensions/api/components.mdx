@@ -1,0 +1,106 @@
+---
+title: "registerComponent：替换或包装 Aether 内置 UI"
+sidebarTitle: "Components"
+description: "使用 registerComponent 修改 Aether 的原生 Compose 目标 — 从 Script Mod 中替换、包装、隐藏，或在内置 UI 前后定位内容。"
+---
+
+`registerComponent` 可修改命名的内置 Compose 目标 — 让你从 Script Mod 中替换、包装或隐藏 Aether 的原生 UI 元素。与在不打扰现有 UI 的情况下添加内容的 surfaces 不同，component 注册会直接介入目标的渲染管线，并可完全移除或重组它。
+
+## API 签名
+
+```typescript
+aether.registerComponent(target: string, definition: ComponentDefinition): () => void;
+```
+
+`registerComponent` 返回一个清理函数。调用它可移除 component 注册，并将目标恢复为先前状态。
+
+## 可用目标
+
+| 目标 | 内置 UI |
+|---|---|
+| `app.content` | 整个路由后的 Aether 应用内容 |
+| `chat.screen` | 完整聊天界面 |
+| `settings.screen` | 完整设置界面 |
+| `chat.composer.actionTray` | 已选 Skill/MCP/Agent 模式托盘 |
+| `chat.composer.skillPicker` | 输入栏加号菜单中的 Skill 行 |
+
+## ComponentDefinition 字段
+
+<ParamField path="id" type="string">
+  此 component 注册的唯一标识符。Aether 用它跟踪同一扩展的注册。若省略，Aether 会根据目标与注册顺序生成一个。
+</ParamField>
+
+<ParamField path="mode" type="string">
+  为 `"before"`、`"after"`、`"replace"`、`"wrap"` 或 `"hide"` 之一。决定此注册如何与目标组件及其他注册交互。默认为 `"wrap"`。见下方 [模式语义](#mode-semantics)。
+</ParamField>
+
+<ParamField path="order" type="number">
+  相对其他针对同一组件的注册的排序优先级。对于 `replace` 与 `hide` 模式，`order` 最高的注册起决定作用。对于 `wrap`、`before` 与 `after`，order 控制层叠顺序。省略时默认为 `0`。
+</ParamField>
+
+<ParamField path="render" type="function">
+  返回 `ui` 节点树的工厂函数。除 `"hide"` 外所有模式请使用 `render` 或 `tree`；`hide` 会移除组件且不在其位置渲染任何内容。
+
+  ```typescript
+  render: (context: RenderContext) => ui node | Promise<ui node>
+  ```
+</ParamField>
+
+<ParamField path="tree" type="object">
+  省略 `render` 时使用的静态 `ui` 节点树。
+</ParamField>
+
+## 模式语义
+
+| 模式 | 行为 |
+|---|---|
+| `before` | 在目标之前立即渲染你的内容，不移除或替换目标 |
+| `after` | 在目标之后立即渲染你的内容，不移除或替换目标 |
+| `replace` | 完全替换原生组件。多个扩展对同一目标注册 `replace` 时，`order` 最高者胜出 |
+| `wrap` | 用你的布局包裹原生组件（或胜出的替换）。在 `render` 树中使用 `ui.core()` 放置被包裹内容。多个 wrapper 从中心向外组合 |
+| `hide` | 从 UI 中完全移除该组件。`order` 最高的 `hide` 注册起决定作用，规则与 `replace` 相同 |
+
+## 示例
+
+### Replace
+
+```typescript
+aether.registerComponent("chat.composer.actionTray", {
+  id: "replacement",
+  mode: "replace",
+  order: 100,
+  render: () => ui.card([
+    ui.text("My replacement tray"),
+  ]),
+});
+```
+
+### Wrap
+
+使用 `ui.core()` 在布局中放置被包裹的内容：
+
+```typescript
+aether.registerComponent("chat.composer.actionTray", {
+  id: "wrapper",
+  mode: "wrap",
+  render: () => ui.column([
+    ui.text("Before the original"),
+    ui.core(),
+    ui.text("After the original"),
+  ]),
+});
+```
+
+### Hide
+
+```typescript
+aether.registerComponent("chat.composer.skillPicker", {
+  id: "remove-native-picker",
+  mode: "hide",
+  order: 100,
+});
+```
+
+<Note>
+  来自不同扩展的多个 wrapper 会围绕单一中心组合 — 胜出的 `replace` 注册，或在无 `replace` 时的原生组件。Native Mod 组件会完整包裹 Script component 管线，因此 Native 的 `replace` 对任何 Script 级替换都具有决定性。
+</Note>

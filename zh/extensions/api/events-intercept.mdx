@@ -1,0 +1,76 @@
+---
+title: "Aether 扩展中的事件与操作拦截"
+sidebarTitle: "Events & Intercept"
+description: "使用 on() 订阅 Aether 事件，并用 intercept 拦截 chat.new、skills.selection 等操作，从扩展中观察或修改应用行为。"
+---
+
+Aether 扩展可订阅应用事件并拦截操作，以观察、修改或取消内置行为。事件让你对应用活动作出响应；拦截器则让你在操作完成前主动塑造或阻止它们。
+
+## `on()` — 事件订阅
+
+```typescript
+aether.on(event: string, handler: EventHandler): () => void;
+```
+
+`on()` 为命名事件注册处理函数，并返回可用于取消订阅的清理函数。事件名由 Aether 核心定义；对下方记录的内置操作使用 `intercept()` 进行干预。
+
+## `intercept()` — 操作拦截
+
+```typescript
+aether.intercept(operation: string, handler: EventHandler): () => void;
+```
+
+`intercept()` 注册在操作分发链中运行的处理函数。拦截器可观察、修改或取消操作。Native 拦截器先运行，随后是按扩展注册顺序排列的 Script 处理函数。
+
+## 内置操作
+
+| 操作 | 载荷字段 | 说明 |
+|---|---|---|
+| `chat.new` | `selected_skill_ids` | 创建新聊天时触发 |
+| `skills.selection` | `skill_id`, `selected` | 切换 Skill 时触发 |
+
+## 从拦截器返回
+
+拦截器处理函数根据返回值控制操作如何继续：
+
+- **返回 `undefined` 或不返回** — 载荷原样传给下一个拦截器。
+- **返回带顶层字段的对象** — 这些字段会合并进链式载荷。
+- **返回 `{ payload: {...} }`** — 将提供的字段合并进链式载荷。
+- **返回 `{ cancel: true, reason: "..." }`** — 完全停止操作并展示原因。
+
+## `chat.new` 示例
+
+通过拦截 `chat.new` 并返回更新后的 `selected_skill_ids`，为每个新聊天添加一个 Skill：
+
+```typescript
+aether.intercept("chat.new", ({ selected_skill_ids }) => ({
+  selected_skill_ids: [...new Set([...selected_skill_ids, "my-skill"])],
+}));
+```
+
+## `skills.selection` 示例
+
+锁定某个 Skill，使其无法被取消选择：
+
+```typescript
+aether.intercept("skills.selection", ({ skill_id, selected }) => {
+  if (skill_id === "locked-skill" && !selected) {
+    return { cancel: true, reason: "This Skill is locked by the Mod." };
+  }
+});
+```
+
+## 通配符拦截（仅 Native Mods）
+
+在 Native Mod 拦截器中，将 `"*"` 作为操作名传入，可观察经注册表分发的每一个操作：
+
+```kotlin
+context.intercept("*", priority = 500) { payload, _ ->
+    // Runs for every operation
+    AetherModOperationDecision(payload = payload)
+}
+```
+
+<Note>
+  Script 拦截器与 Native 拦截器形成一条共享链。对于同一操作，无论注册顺序如何，Native 拦截器始终在 Script 拦截器之前运行。
+</Note>

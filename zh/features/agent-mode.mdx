@@ -1,0 +1,58 @@
+---
+title: "Agent 模式：Aether 中的 Android 设备自动化"
+sidebarTitle: "Agent 模式"
+description: "启用 Agent 模式，让 Aether 在隔离的 Android 虚拟显示器上控制应用。"
+---
+
+Agent 模式为 Aether 提供一个隔离的 Android 虚拟显示器，可通过 `agent_display` 工具进行控制。Shell 命令、文件工具、Skills、MCP 服务器以及多步 Pi Agent 循环无需 Agent 模式即可使用。
+
+## 如何启用 Agent 模式
+
+先完成 Termux 设置，然后在 **设置 → Agent 模式** 中通过 Shizuku 或实验性 Root 授权 Agent 模式。在输入栏菜单中切换 **Agent 模式** 按钮，即可在该聊天中使用虚拟显示工具。
+
+## Aether 能做什么
+
+<CardGroup cols={2}>
+  <Card title="Shell 命令" icon="terminal">
+    在内置 Alpine Linux 虚拟机中运行任意 shell 命令 — 从简单工具到长时间脚本。此功能不需要 Agent 模式。
+  </Card>
+  <Card title="文件管理" icon="folder-open">
+    在 Alpine 文件系统中读写文件、创建目录，并在工具之间传递输出。此功能不需要 Agent 模式。
+  </Card>
+  <Card title="代码执行" icon="code">
+    执行 Python、Node.js、shell 脚本，以及你通过 `apk add` 安装的其他运行时。此功能不需要 Agent 模式。
+  </Card>
+  <Card title="Skills 与 MCP" icon="puzzle-piece">
+    使用 Skills 并调用 MCP 服务器，实现网络搜索、自定义 API 等。此功能不需要 Agent 模式。
+  </Card>
+  <Card title="Android 自动化" icon="mobile">
+    启用 Agent 模式后，可注入点击、滑动、按键事件与文本，截屏，并在隔离的虚拟显示器上控制应用。
+  </Card>
+</CardGroup>
+
+## 智能体循环
+
+Pi 框架在每一次 Aether 对话的核心驱动 **工具使用循环**：
+
+1. 你发送任务描述。
+2. LLM 决定调用哪个工具以及参数。
+3. Aether 执行该工具（shell 命令、文件读写、Skill 调用等）。
+4. 结果作为上下文反馈到下一轮 LLM。
+5. 重复步骤 2–4，直到 LLM 判定任务完成并返回最终答案。
+
+该循环会自动继续 — 你无需在步骤之间再次提示。复杂任务中，Agent 可发起数十次工具调用。
+
+## 暂停与引导
+
+你不必让 Agent 不受干扰地一直运行。生成过程中随时可以：
+
+- **暂停**：点击输入栏中的停止按钮，立即中断当前生成。
+- **引导**：使用生成中出现的 **Steer** 输入发送后续指令。Agent 会将你的消息并入当前上下文，而无需从头重启任务。
+
+<Warning>
+  Aether 的工具功能强大。Agent 可读写已配置运行时中的文件，Agent 模式还可在隔离的 Android 虚拟显示器上控制应用。对于耗时或复杂任务 — 尤其涉及敏感文件、网络请求或不可逆操作 — 请先审阅计划，再让其完整运行。
+</Warning>
+
+<Tip>
+  先从简单、范围明确的任务开始（例如「在隔离显示器上打开设置并截屏」），熟悉 Agent 模式行为后再交给它多步工作流。
+</Tip>

@@ -8,33 +8,33 @@ Aether's settings screen is your control center for every aspect of the app's be
 
 ## Accessing Settings
 
-Tap the **gear icon** (⚙️) in the top-right corner of the chat screen to open the Settings panel. Settings are organized into clearly labeled sections so you can find what you need quickly.
+Open the **conversation drawer** from the menu button, then tap **Settings**. Settings are organized into clearly labeled sections so you can find what you need quickly.
 
 ## Settings Sections
 
-### Providers
+### Model Providers
 
-Add, edit, and remove your LLM provider credentials here. Each provider entry stores an API key and any additional configuration required to connect Aether to that service. For a full walkthrough of adding and managing providers, see the [Providers](/configuration/providers) page.
+Add, edit, and remove your LLM provider credentials here. Each provider entry stores an API key, OAuth credential, or environment configuration required to connect Aether to that service. For a full walkthrough of adding and managing providers, see the [Providers](/configuration/providers) page.
 
-### Model
+### Default Models
 
-Choose the default model used for all new chat sessions. Tap the model name to open a picker showing every model available across your configured providers. Individual chats can override this default directly from the composer's model selector, so your global setting is just the starting point.
+Choose the default models used for new chat sessions, conversation titles, automatic naming, and compaction. Individual chats can override the chat default directly from the top bar's model selector, so your global setting is just the starting point.
 
 ### Agent Mode
 
-Toggle **Agent Mode** on or off as the global default for new conversations. When Agent Mode is enabled, Aether uses a tool-calling loop that lets the AI execute shell commands, read files, and call Skills automatically. You can also configure the **reasoning effort** level here for models that expose this setting (such as OpenAI's o-series), ranging from low to high.
+Authorize **Agent Mode** with Shizuku or experimental Root access. Agent Mode adds isolated virtual-display tools; Aether's tool-calling loop, shell commands, file tools, Skills, and MCP servers work without it.
 
 ### Extensions
 
-Browse every extension currently installed in Aether, install new extensions from a `.zip` archive or an npm package name, and review any extension errors logged at load time. You can also manage **Native Mod Safe Mode** from this section — if a compiled Kotlin/DEX mod is causing crashes, Safe Mode lets you disable it without losing your other extensions.
+Browse every extension currently installed in Aether, install new extensions from a `.zip` archive or the npm-backed extension catalog, and review any extension errors logged at load time. You can also manage **Native Mod Safe Mode** from this section — if a compiled Kotlin/DEX mod is causing crashes, Safe Mode lets you disable it without losing your other extensions.
 
-### Skills / MCP
+### Agent Skills / MCP Servers
 
-Manage your installed **Skills** — discrete tool packages that give the agent new capabilities — and configure **MCP (Model Context Protocol) server** connections. Adding an MCP server exposes its full tool surface to the agent during any session where that skill is active.
+Manage installed **Agent Skills** and configure **MCP (Model Context Protocol) server** connections on their separate settings pages. Skills provide reusable instructions and resources. MCP servers can be selected per chat.
 
 ### Scheduled Tasks
 
-Set up recurring agent workflows that run automatically at specified times without any manual input. Configure schedules, prompts, models, and the Skills each task should use. For full details, see the [Scheduled Tasks](/configuration/scheduled-tasks) page.
+Set up recurring agent workflows that run automatically at specified times without any manual input. Configure each task's prompt and interval, daily, or weekly schedule. For full details, see the [Scheduled Tasks](/configuration/scheduled-tasks) page.
 
 ---
 

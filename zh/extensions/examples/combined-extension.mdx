@@ -1,0 +1,232 @@
+---
+title: "组合 Pi 与 Aether 扩展示例：完整导读"
+sidebarTitle: "组合扩展"
+description: "完整导读 aether-extension 示例 — 在一个包中组合 Pi Agent 命令与 Aether UI 表面、页面、存储及事件钩子。"
+---
+
+Aether 仓库中的 `examples/aether-extension` 包演示了如何在单个包中组合 Pi Agent 级工具与 Aether UI 扩展。本导读覆盖示例的每一部分：包清单、Pi 工厂、Aether 工厂、表面与页面注册、存储，以及 `before_send` 事件钩子。
+
+## 此扩展做什么
+
+- 注册 Pi `/aether-example` 命令，在扩展激活时通知 Agent
+- 在输入框上方添加卡片表面，包含实时计数按钮与提示词预填操作
+- 添加全屏抽屉页面（「扩展仪表盘」），包含持久化计数卡片与嵌入式 WebView
+- 通过 `Aether.postMessage` 将 WebView 桥接回扩展操作
+- 在扩展存储中跨会话持久化计数器值
+- 挂钩 `before_send` 事件，从发出的消息中剥离 `!raw ` 前缀
+
+## 包声明
+
+`package.json` 在 `pi.extensions` 与 `aether.extensions` 下都列出同一个 `index.ts` 入口，因此单个文件同时驱动 Pi Agent 侧与 Aether UI 侧：
+
+```json
+{
+  "name": "aether-combined-extension-example",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "aether": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}
+```
+
+## 完整带注释代码导读
+
+### 1. 导入与 `defineAetherExtension`
+
+```ts
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import {
+  defineAetherExtension,
+  ui,
+} from "@aether/extension-api";
+```
+
+- `ExtensionAPI` 为 Pi 工厂（默认导出）中的 `pi` 参数提供类型。
+- `defineAetherExtension` 包装 Aether 工厂，并为 `aether` 上下文对象提供类型安全访问。
+- `ui` 是在每个 `render` 回调中使用的声明式 UI 构建器。
+
+---
+
+### 2. Pi 工厂（默认导出）：注册 `/aether-example`
+
+```ts
+export default function activatePi(pi: ExtensionAPI) {
+  pi.registerCommand("aether-example", {
+    description: "Show that the package is also active in Pi",
+    handler: async (_args, context) => {
+      context.ui.notify("The combined extension is active.", "info");
+    },
+  });
+}
+```
+
+因为文件声明在 `pi.extensions` 下，Aether 将其作为标准 Pi 扩展加载。你将 Pi 工厂导出为 **默认导出**。处理程序仅触发一条 info 通知 — 这是证明包的 Pi 侧与 Aether 侧同时生效的最小示例。
+
+---
+
+### 3. Aether 工厂（`activateAether`）：计数操作 + 预填操作
+
+```ts
+export const activateAether = defineAetherExtension((aether) => {
+  aether.registerAction("increment", async () => {
+    const count = aether.storage.get("count", 0) + 1;
+    aether.storage.set("count", count);
+    await aether.host.invoke("app.notify", {
+      message: `Extension count: ${count}`,
+    });
+  });
+
+  aether.registerAction("prefill", async () => {
+    await aether.host.invoke("app.setDraftInput", {
+      text: "Summarize the current workspace and suggest the next three tasks.",
+    });
+  });
+  // ...
+});
+```
+
+你将 Aether 工厂导出为 **`activateAether`**（命名导出）。因为该文件也列在 `aether.extensions` 下，Aether 会发现它。
+
+- **`increment`** 从 `aether.storage` 读取当前 `count`（默认为 `0`），递增后写回，再通过 `aether.host.invoke("app.notify", ...)` 显示 Android toast。因为 `storage` 是同步的，并持久化在 `~/.aether/app-extension-state.json` 中，该值可在热重载与应用重启后保留。
+- **`prefill`** 使用 `app.setDraftInput` 用现成提示词替换输入框文本。你可在 UI 中任意按钮上传入操作 ID `"prefill"` 来触发。
+
+---
+
+### 4. 在 `chat.composer.top` 注册表面
+
+```ts
+aether.registerSurface("chat.composer.top", {
+  id: "quick-tools",
+  order: 10,
+  render: ({ storage, is_running }) =>
+    ui.card([
+      ui.row([
+        ui.text("Combined extension", {
+          style: "label",
+          weight: "semibold",
+        }),
+        ui.text(is_running ? "Agent running" : "Ready", {
+          color: "muted",
+        }),
+      ], {
+        arrangement: "space-between",
+        verticalAlignment: "center",
+      }),
+      ui.row([
+        ui.button(`Count ${storage.count ?? 0}`, "increment", {
+          tone: "neutral",
+        }),
+        ui.button("Prefill", "prefill"),
+        ui.node("pageButton", {
+          page: "dashboard",
+          label: "Dashboard",
+          icon: "code",
+          width: "fill",
+        }),
+      ], {
+        wrap: true,
+        rowSpacing: 8,
+      }),
+    ], {
+      radius: 22,
+    }),
+});
+```
+
+`registerSurface` 将内容挂到 `chat.composer.top` 插槽 — 即文本输入框正上方。要点：
+
+- **`order: 10`** — 多个扩展注册同一插槽时控制堆叠顺序。
+- **`render` 上下文** — 接收实时应用状态。`storage` 保存扩展的持久化键值对；`is_running` 反映 Agent 当前是否在生成。
+- **`ui.card`** — 将全部内容包在圆角卡片中。`radius: 22` 更大幅度圆角，以匹配输入框形态。
+- **带 `arrangement: "space-between"` 的 `ui.row`** — 将标签与状态文本拉到两端。
+- **带 `wrap: true` 的 `ui.row`** — 窄屏上三个按钮会换到第二行；`rowSpacing: 8` 为行间增加垂直间距。
+- **`ui.node("pageButton", { page: "dashboard", ... })`** — 特殊按钮类型，导航到 ID 为 `"dashboard"` 的已注册页面，并在会话抽屉中打开。
+
+---
+
+### 5. 带 WebView 与操作桥的页面注册
+
+```ts
+aether.registerPage({
+  id: "dashboard",
+  title: "Extension dashboard",
+  subtitle: "Native Compose and trusted TypeScript",
+  icon: "code",
+  render: ({ storage }) =>
+    ui.column([
+      ui.text("Aether Extension API", {
+        style: "headline",
+        weight: "bold",
+      }),
+      ui.card([
+        ui.text(`Persistent count: ${storage.count ?? 0}`),
+        ui.button("Increment", "increment"),
+      ]),
+      ui.web({
+        height: 180,
+        radius: 22,
+        html: `
+          <!doctype html>
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body { margin: 0; padding: 18px; color: white; background: #202124;
+                   font: 15px system-ui; }
+            button { border: 0; border-radius: 14px; padding: 12px 16px;
+                     background: #8ea2ff; color: #111318; font-weight: 700; }
+          </style>
+          <h3>Extension WebView</h3>
+          <button onclick='Aether.postMessage(JSON.stringify({
+            action: "increment",
+            args: { source: "web" }
+          }))'>Increment through JavaScript</button>
+        `,
+      }),
+    ], {
+      scroll: true,
+      spacing: 14,
+    }),
+});
+```
+
+`registerPage` 创建全屏目标页，Aether 会自动将其列在会话抽屉中。注意：
+
+- **`id: "dashboard"`** — 此字符串必须与上方表面中 `pageButton` 节点的 `page` 字段匹配。
+- **`render` 上下文** — 接收与表面相同的应用状态对象。`storage.count` 读取持久化计数器。
+- **`ui.web`** — 将任意 HTML 文档注入原生 Android `WebView`。WebView 内启用 JavaScript、DOM 存储与网络访问。
+- **`Aether.postMessage(JSON.stringify({ action, args }))`** — 从 WebView JavaScript 回到扩展逻辑的唯一桥接。用户点击 "Increment through JavaScript" 时，WebView 会发送消息，Aether 将其路由到已注册的 `increment` 操作。你可以在 JSON 对象中传入任意 `args`；操作处理程序将其作为第一个参数接收。
+- **带 `scroll: true` 的 `ui.column`** — 内容超出屏幕时使页面主体可垂直滚动。
+
+---
+
+### 6. `before_send` 事件钩子
+
+```ts
+aether.on("before_send", ({ text }) => {
+  if (String(text).startsWith("!raw ")) {
+    return { text: String(text).slice(5) };
+  }
+  return undefined;
+});
+```
+
+`aether.on("before_send", handler)` 在用户消息提交给模型前立即触发。处理程序接收草稿载荷，并可返回部分对象以合并回去。这里，任何以 `!raw ` 开头的消息会在发送前剥离该前缀。返回 `undefined`（或不返回）则保持载荷不变。
+
+## 安装
+
+1. 将 `examples/aether-extension` 目录打包为 `.zip` 归档。
+2. 在 Android 设备上打开 Aether。
+3. 前往 **设置 → 扩展** 并点按 **导入扩展**。
+4. 选择 zip 文件。Aether 将其解压到 `~/.aether/extensions` 并立即热加载 Script 侧。
+
+<Tip>
+请对照 Script Mod API 文档中关于表面、页面、存储与事件的部分阅读本示例，以理解各部分如何组合。组合扩展刻意保持精简 — 它使用的每项能力都可独立组合，因此你可以把单个片段（例如仅 `before_send` 钩子，或仅表面）复制到新包中，而无需其余部分。
+</Tip>

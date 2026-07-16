@@ -1,7 +1,7 @@
 ---
 title: "Native Mod Safe Mode: Crash-Loop Recovery in Aether"
 sidebarTitle: "Safe Mode"
-description: "Aether's Native Mod Safe Mode automatically disables native mods after a crash loop, letting you recover and debug without getting stuck in a boot loop."
+description: "Aether's Native Mod Safe Mode automatically skips native mods after an interrupted startup, letting you recover and debug without getting stuck in a boot loop."
 ---
 
 Aether protects against crash-looping native mods with an automatic Safe Mode. If a Native Mod causes a crash before the UI stabilizes, Safe Mode activates on the next start and skips all Native Mods — letting you open the app, diagnose the problem, and recover.
@@ -47,17 +47,17 @@ When Safe Mode activates:
 
 You can arm Safe Mode proactively before installing a Native Mod you are not sure about:
 
-- A **"Start in Safe Mode next time"** action is available in **Settings → Extensions** at any time, even when Safe Mode is not currently active.
+- A **"Start in Native Mod Safe Mode next time"** action is available in **Settings → Extensions** at any time, even when Safe Mode is not currently active.
 - Use this when you expect a new or updated Native Mod might cause issues and want a safe recovery path ready before restarting.
 
 <Warning>
   Safe Mode is a crash-loop recovery mechanism, not a security sandbox. It only
-  activates when the process crashes or is killed during mod loading. A
+  activates when the process crashes or is killed before the startup marker is cleared. A
   misbehaving mod that loads successfully but causes problems at runtime is not
   contained by Safe Mode.
 </Warning>
 
 <Note>
-  Script Mods and Pi extensions are never skipped by Safe Mode. They hot-reload
-  at any time and do not risk putting the process into a crash loop at startup.
+  Script Mods and Pi extensions are never skipped by Safe Mode. They can reload
+  without restarting Aether and do not risk putting the process into a crash loop at startup.
 </Note>

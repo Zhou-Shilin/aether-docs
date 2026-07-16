@@ -4,7 +4,7 @@ sidebarTitle: "Events & Intercept"
 description: "Subscribe to Aether events with on() and intercept operations like chat.new and skills.selection to observe or modify app behavior from your extension."
 ---
 
-Aether extensions can subscribe to app events and intercept operations to observe, modify, or cancel built-in behaviors. Events give you a passive window into app activity; interceptors let you actively shape or stop operations before they complete.
+Aether extensions can subscribe to app events and intercept operations to observe, modify, or cancel built-in behaviors. Events let you react to app activity; interceptors let you actively shape or stop operations before they complete.
 
 ## `on()` — event subscription
 
@@ -12,7 +12,7 @@ Aether extensions can subscribe to app events and intercept operations to observ
 aether.on(event: string, handler: EventHandler): () => void;
 ```
 
-`on()` registers a handler for a named event and returns a cleanup function you can call to unsubscribe. Event names are defined by Aether core or by other extensions; use `intercept()` to act on the built-in operations documented below.
+`on()` registers a handler for a named event and returns a cleanup function you can call to unsubscribe. Event names are defined by Aether core; use `intercept()` to act on the built-in operations documented below.
 
 ## `intercept()` — operation interception
 
@@ -35,16 +35,16 @@ Your interceptor handler controls how the operation proceeds based on its return
 
 - **Return `undefined` or nothing** — the payload passes through to the next interceptor unchanged.
 - **Return an object with top-level fields** — those fields are merged into the chained payload.
-- **Return `{ payload: {...} }`** — explicitly replaces all payload fields with the supplied object.
+- **Return `{ payload: {...} }`** — merges the supplied fields into the chained payload.
 - **Return `{ cancel: true, reason: "..." }`** — stops the operation entirely and surfaces the reason.
 
 ## `chat.new` example
 
-Set default Skills for every new chat by intercepting `chat.new` and returning the updated `selected_skill_ids`:
+Add a Skill to every new chat by intercepting `chat.new` and returning the updated `selected_skill_ids`:
 
 ```typescript
 aether.intercept("chat.new", ({ selected_skill_ids }) => ({
-  selected_skill_ids,
+  selected_skill_ids: [...new Set([...selected_skill_ids, "my-skill"])],
 }));
 ```
 

@@ -1,0 +1,83 @@
+---
+title: "Termux 与 Shizuku：Android 自动化集成"
+sidebarTitle: "Termux 与 Shizuku"
+description: "将 Aether 连接到 Termux 以获得更广的终端能力，或使用 Shizuku 启用特权 Agent 模式进行 Android 设备自动化。"
+---
+
+除了内置 Alpine 虚拟机，Aether 还可与 **Termux** 集成以增强终端能力，并与 **Shizuku** 集成以实现 Agent 模式的隔离虚拟显示自动化。两者均为可选 — 仅在需要时启用。
+
+## Termux 集成
+
+[Termux](https://termux.dev/) 是功能强大的 Android 终端模拟器，自带软件包生态。将 Aether 连接到 Termux 后，Agent 可直接在你的 Termux 会话中运行命令，并访问其文件系统（可与内置 Alpine 环境并用，或替代使用）。
+
+### 要求
+
+<Warning>
+  你必须从 **[F-Droid](https://f-droid.org/packages/com.termux/)** 或 **[Termux GitHub releases](https://github.com/termux/termux-app/releases)** 安装 Termux — **不要** 从 Google Play 商店安装。Play 商店版本不支持 Aether 在 Termux 中执行命令所需的 `RUN_COMMAND` 权限。
+</Warning>
+
+### 设置
+
+1. 从 F-Droid 或 GitHub 安装 Termux。
+2. 打开 Aether，进入 **设置 → Termux**。
+3. 授予 Aether **在 Termux 环境中运行命令** 的权限。
+4. 在 Termux 中运行 Aether 的设置命令以启用外部应用，然后返回 Aether 并刷新状态。
+
+### 使用场景
+
+- 访问 Termux 更广泛的软件包生态（Alpine 中没有的 `apt`/`pkg` 包）。
+- 与 Agent 共享你的 **Termux 主目录**（`~/`）— 若你已在其中存放工具、配置或数据，会很方便。
+- 与其他已打开的 Termux 会话并行运行命令。
+
+---
+
+## Shizuku 集成
+
+[Shizuku](https://shizuku.rikka.app/) 在无需完全 root 的情况下，为 Aether 提供提升后的服务。启用 Shizuku 后，Agent 模式可创建并控制隔离的 Android 虚拟显示器。
+
+### 要求
+
+- 已从 Google Play 或 GitHub 安装 **Shizuku**。
+- 通过以下方式之一启动 Shizuku：
+  - **无线 ADB 调试**（无需 root — 适用于 Android 11+）
+  - **已 root 设备**，使用 Shizuku 的 root 方式
+
+### 设置
+
+1. 按 [Shizuku 设置指南](https://shizuku.rikka.app/guide/setup/) 安装并启动 Shizuku。
+2. 完成 **设置 → Termux**，然后打开 **设置 → Agent 模式**，选择 **Shizuku**，并启用 Agent 模式授权。
+3. 出现 Shizuku 权限对话框 — 点击 **允许**。
+4. 保存并刷新授权状态，然后从输入栏为聊天启用 Agent 模式。
+
+### 特权 Agent 模式可启用的能力
+
+通过 Shizuku 授权 Agent 模式后，Agent 获得以下能力：
+
+<CardGroup cols={2}>
+  <Card title="虚拟显示器" icon="display">
+    创建独立于物理屏幕的虚拟 Android 显示器。
+  </Card>
+  <Card title="启动应用" icon="rocket">
+    在隔离的虚拟显示器上启动已安装应用。
+  </Card>
+  <Card title="触摸注入" icon="hand-pointer">
+    向隔离的虚拟显示器注入点击与滑动。
+  </Card>
+  <Card title="按键事件" icon="keyboard">
+    发送按键事件，并向隔离虚拟显示器上获得焦点的应用输入文本。
+  </Card>
+  <Card title="截屏" icon="camera">
+    捕获隔离虚拟显示器的截图，用于基于视觉的反馈循环。
+  </Card>
+  <Card title="应用清单" icon="list">
+    列出可启动的已安装应用及其包名，便于发现与定位目标。
+  </Card>
+</CardGroup>
+
+<Warning>
+  Shizuku 赋予 Aether 相当高的提升访问权限。Agent 模式可在其隔离的虚拟显示器上启动应用、读取屏幕内容并注入输入。仅在你理解并信任要交给 Agent 的任务时启用此集成。
+</Warning>
+
+<Note>
+  Agent 模式也可使用实验性 Root 授权，以替代 Shizuku。在完成 Termux 设置后，从 **设置 → Agent 模式** 配置任一方式。
+</Note>

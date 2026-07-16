@@ -1,0 +1,85 @@
+---
+title: "扩展存储：Mods 的持久键值存储"
+sidebarTitle: "Storage"
+description: "使用 Aether 的扩展存储 API，在共享后端文件中以命名空间持久化键值数据，跨会话保留。"
+---
+
+每个扩展都有持久的键值命名空间。数据可在扩展重载与应用重启后保留，因为 Aether 将所有命名空间存储在 Alpine 文件系统中的 `~/.aether/app-extension-state.json`。按扩展 ID 划分命名空间是 API 约定，不是受信任扩展之间的安全边界。
+
+## API 参考
+
+```typescript
+readonly storage: {
+  get<T>(key: string, fallback?: T): T;
+  set(key: string, value: unknown): void;
+  delete(key: string): void;
+  clear(): void;
+  snapshot(): object;
+};
+```
+
+所有存储方法都是 **同步的**。
+
+## 读取值
+
+向 `get()` 传入可选的第二个参数作为回退值。键不存在时返回该回退值：
+
+```typescript
+const count = aether.storage.get("count", 0);
+const name = aether.storage.get<string>("name", "Anonymous");
+```
+
+## 写入值
+
+```typescript
+aether.storage.set("count", 42);
+aether.storage.set("config", { theme: "dark", autoSend: false });
+```
+
+## 删除值
+
+```typescript
+aether.storage.delete("count");
+```
+
+## 清除全部扩展存储
+
+```typescript
+aether.storage.clear();
+```
+
+## 获取完整快照
+
+`snapshot()` 返回包含你的扩展当前存储的全部键值对的普通对象：
+
+```typescript
+const all = aether.storage.snapshot();
+```
+
+## 在 surface 渲染中使用存储
+
+以下示例将持久计数器接到渲染在聊天输入栏上方的 surface：
+
+```typescript
+aether.registerAction("increment", ({ amount = 1 }) => {
+  const count = aether.storage.get("count", 0) + Number(amount);
+  aether.storage.set("count", count);
+});
+
+aether.registerSurface("chat.composer.top", {
+  id: "counter",
+  render: ({ storage }) =>
+    ui.row([
+      ui.text(`Count: ${storage.count ?? 0}`),
+      ui.button("Increment", "increment", { args: { amount: 1 } }),
+    ]),
+});
+```
+
+<Note>
+  传给 surface 的 `render` 函数的 `storage` 对象是渲染时的快照。每次 `storage.set()`、`storage.delete()` 与 `storage.clear()` 都会自动触发重渲染 — 存储写入后无需调用 `aether.invalidate()`。
+</Note>
+
+<Tip>
+  仅存储可 JSON 序列化的值 — 字符串、数字、布尔值、普通对象与数组。函数与类实例无法正确持久化。
+</Tip>

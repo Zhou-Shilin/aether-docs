@@ -28,14 +28,14 @@ A single `package.json` can declare all three tiers at once. The `pi.extensions`
 
 ## Installing extensions
 
-Extension packages live under `~/.aether/extensions` inside Aether's managed Alpine filesystem. You can install an extension in two ways:
+Imported extension packages live under `~/.aether/extensions` inside Aether's managed Alpine filesystem. You can install an extension in two ways:
 
-- **Import a zip**: open Settings → Extensions → Import and select the zip file. Aether extracts the package into `~/.aether/extensions` and loads it immediately.
+- **Import a zip**: open Settings → Extensions, tap **Import extension**, and select the zip file. Aether extracts the package into `~/.aether/extensions` and loads it immediately.
 - **npm packages**: add the package through Aether's package management interface and declare `aether.extensions` entries in its `package.json`. Aether discovers and loads it alongside locally installed extensions.
 
 ## Hot reload
 
-Script Mod changes — any modification to a `pi.extensions` or `aether.extensions` entry file — reload automatically without restarting Aether. The extension runtime re-imports the updated file, calls your factory function again, and triggers a UI refresh. Native Mods are discovered and loaded only during app process startup; installing, updating, removing, or changing a Native Mod requires restarting Aether.
+Script Mods and Pi extensions reload without restarting Aether when an extension reload is triggered. Entry files are not watched for changes automatically. The extension runtime re-imports the updated file, calls your factory function again, and triggers a UI refresh. Native Mods are discovered and loaded only during app process startup; installing, updating, removing, or changing a Native Mod requires restarting Aether.
 
 ## Explore further
 

@@ -26,12 +26,12 @@ aether.registerComponent(target: string, definition: ComponentDefinition): () =>
 
 ## ComponentDefinition fields
 
-<ParamField path="id" type="string" required>
-  Unique identifier for this component registration. Aether uses this to track registrations from the same extension.
+<ParamField path="id" type="string">
+  Unique identifier for this component registration. Aether uses this to track registrations from the same extension. If omitted, Aether generates one from the target and registration order.
 </ParamField>
 
-<ParamField path="mode" type="string" required>
-  One of `"before"`, `"after"`, `"replace"`, `"wrap"`, or `"hide"`. Determines how this registration interacts with the target component and other registrations. See [Mode semantics](#mode-semantics) below.
+<ParamField path="mode" type="string">
+  One of `"before"`, `"after"`, `"replace"`, `"wrap"`, or `"hide"`. Determines how this registration interacts with the target component and other registrations. Defaults to `"wrap"`. See [Mode semantics](#mode-semantics) below.
 </ParamField>
 
 <ParamField path="order" type="number">
@@ -39,11 +39,15 @@ aether.registerComponent(target: string, definition: ComponentDefinition): () =>
 </ParamField>
 
 <ParamField path="render" type="function">
-  A factory function that returns a `ui` node tree. Required for all modes except `"hide"`, which removes the component without rendering anything in its place.
+  A factory function that returns a `ui` node tree. Use either `render` or `tree` for all modes except `"hide"`, which removes the component without rendering anything in its place.
 
   ```typescript
   render: (context: RenderContext) => ui node | Promise<ui node>
   ```
+</ParamField>
+
+<ParamField path="tree" type="object">
+  A static `ui` node tree used when `render` is omitted.
 </ParamField>
 
 ## Mode semantics

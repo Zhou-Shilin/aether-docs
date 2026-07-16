@@ -1,0 +1,58 @@
+---
+title: "在 Aether 中配置 LLM 提供商与 API 密钥"
+sidebarTitle: "提供商"
+description: "将 OpenAI、Anthropic、Google、DeepSeek、Groq、Mistral 或 Cloudflare 的凭证添加到 Aether，开始使用任意支持的 LLM 模型。"
+---
+
+Aether 使用你自己的 API 密钥，从设备直接调用 LLM 提供商。没有代理、没有 Aether 账户、也没有订阅 — 你自带密钥，Aether 代表你直连提供商 API。
+
+## 支持的提供商
+
+| 提供商 | API 密钥位置 | 说明 |
+|---|---|---|
+| **OpenAI** | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) | GPT 5.6 Sol 及其他 OpenAI 模型 |
+| **Anthropic** | [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) | Claude Fable 5 及其他 Claude 模型 |
+| **Google** | [aistudio.google.com](https://aistudio.google.com) | Gemini 3.5 Flash 及其他 Gemini 模型 |
+| **DeepSeek** | [platform.deepseek.com](https://platform.deepseek.com) | 快速且成本友好 |
+| **Groq** | [console.groq.com/keys](https://console.groq.com/keys) | 超低延迟推理 |
+| **Mistral** | [console.mistral.ai](https://console.mistral.ai) | 欧洲 LLM 提供商 |
+| **Cloudflare Workers AI** | [dash.cloudflare.com](https://dash.cloudflare.com) | 边缘推理 |
+
+## 添加提供商
+
+<Steps>
+  <Step title="打开提供商设置">
+    打开 Aether，然后进入 **设置 → 模型提供商**。
+  </Step>
+  <Step title="点击添加提供商">
+    点击提供商界面顶部的 **添加提供商** 操作。
+  </Step>
+  <Step title="选择提供商">
+    从列表中选择提供商（例如 OpenAI 或 Anthropic）。
+  </Step>
+  <Step title="配置凭证">
+    在所选提供商支持时，选择 API 密钥、OAuth 或环境凭证，然后完成所需设置。
+  </Step>
+  <Step title="保存并验证">
+    获取提供商的模型目录，启用你需要的模型，然后点击 **保存**。
+  </Step>
+</Steps>
+
+## 编辑或移除提供商
+
+- **编辑**：点击任意提供商行，打开详情界面并更新 API 密钥或其他凭证。
+- **移除**：点击提供商行上的移除图标。
+
+## 切换当前模型
+
+添加提供商后，点击顶栏中的 **模型选择器**（显示当前模型名称的胶囊按钮），打开所有已配置提供商下的完整模型列表。点击任意模型即可在当前会话中使用；也可在 **设置 → 模型提供商 → 默认模型** 中将其设为默认。
+
+---
+
+<Note>
+  API 密钥保存在设备上 Aether 的私有应用存储中。它们仅传输到对应提供商的 API 端点 — 绝不会发往任何由 Aether 运营的服务器。
+</Note>
+
+<Warning>
+  若卸载 Aether，已存储的 API 密钥会随所有其他应用数据一并永久删除。卸载前请将密钥备份到密码管理器或安全位置。
+</Warning>

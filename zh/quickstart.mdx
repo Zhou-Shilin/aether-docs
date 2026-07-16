@@ -1,0 +1,58 @@
+---
+title: "几分钟上手 Aether"
+sidebarTitle: "快速开始"
+description: "在 Android 设备上安装 Aether、连接 LLM 提供商，并按步骤向 AI Agent 发送第一条消息。"
+---
+
+在 Android 设备上运行 Aether，并配置可用的 LLM 提供商。完成本指南后，你将拥有一个可正常对话的 AI Agent — 如有需要，还可执行 shell 命令并自动化手机任务。
+
+<Steps>
+  <Step title="下载 Aether">
+    前往 [Aether GitHub Releases 页面](https://github.com/Zhou-Shilin/Aether/releases) 下载最新 APK。
+
+    - 选择 **arm64-v8a** APK（目前唯一支持的架构）。
+    - Aether 需要 **Android 8.0（API 26）或更高版本**。
+  </Step>
+  <Step title="安装 APK">
+    Android 默认会阻止来自 Play 商店以外的安装。安装 Aether 前需要先授予权限：
+
+    1. 进入 **设置 → 应用 → 特殊应用访问 → 安装未知应用**。
+    2. 找到你的浏览器或文件管理器，打开 **允许来自此来源**。
+    3. 打开下载的 APK 文件，点击 **安装**。
+    4. 等待安装完成，然后点击 **打开**。
+  </Step>
+  <Step title="启动并完成引导">
+    首次打开 Aether 时，引导界面会带你完成必要设置：
+
+    - 授予 **通知** 权限，以便 Agent 任务完成时收到提醒。
+    - 选择是否设置内置 Alpine 运行时，或配置 Termux 以及可选的 Agent 模式。
+
+    按屏幕提示完成各步骤。之后也可在 Android 系统设置中重新调整权限。
+  </Step>
+  <Step title="添加 LLM 提供商">
+    开始聊天前，Aether 至少需要配置一个 LLM 提供商：
+
+    1. 从菜单按钮打开会话抽屉，然后点击 **设置**。
+    2. 选择 **模型提供商**。
+    3. 点击 **添加提供商**，选择你偏好的服务 — OpenAI、Anthropic、Google、DeepSeek、Groq、Mistral、Cloudflare 或其他支持的选项。
+    4. 配置该提供商支持的 **API 密钥**、**OAuth** 或 **环境凭证**。
+    5. 拉取并启用你需要的模型，然后点击 **保存**。
+  </Step>
+  <Step title="选择模型">
+    返回主聊天界面：
+
+    1. 点击顶栏中的 **模型选择器**。
+    2. 浏览已配置提供商下的模型列表，点击你要使用的模型。
+  </Step>
+  <Step title="发送第一条消息">
+    在输入栏输入消息并点击 **发送**。Aether 会实时流式返回所选 LLM 的回复。完成 — 你已经可以开始使用了！
+  </Step>
+</Steps>
+
+<Tip>
+  当你希望 Aether 在隔离的 Android 虚拟显示上控制应用时，可在输入栏菜单中切换 **Agent 模式**（指针图标）。Shell 命令、Skills、MCP 服务器以及多步工具调用在不启用 Agent 模式时同样可用。
+</Tip>
+
+<Note>
+  Alpine Linux 根文件系统随 Aether 打包，在你初始化 Alpine 时解压。启用 Agent 模式时不会再下载。
+</Note>

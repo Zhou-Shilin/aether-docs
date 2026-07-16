@@ -1,0 +1,59 @@
+---
+title: "Aether 支持的 AI 模型与 LLM 提供商"
+sidebarTitle: "模型与提供商"
+description: "Aether 支持 OpenAI、Anthropic、Google、DeepSeek、Groq、Mistral、Cloudflare 等。了解如何添加提供商并切换模型。"
+---
+
+Aether 通过底层的 Pi 框架支持多种 LLM 提供商。你使用自己的凭证 — 不会经过 Aether 服务器代理。凭证直接从设备发往各提供商的 API 端点。
+
+## 支持的提供商
+
+| 提供商 | 说明 |
+|---|---|
+| **OpenAI** | GPT 5.6 Sol 及其他 OpenAI 聊天模型 |
+| **Anthropic（Claude）** | Claude Fable 5 及其他 Claude 模型 |
+| **Google（Gemini）** | Gemini 3.5 Flash 及其他 Gemini 模型 |
+| **DeepSeek** | DeepSeek-V3、DeepSeek-R1 |
+| **Groq** | 面向 Llama、Mixtral、Gemma 等模型的超快推理 |
+| **Mistral** | Mistral Large、Mistral Small、Codestral 等 |
+| **Cloudflare Workers AI** | 通过你的 Cloudflare 账户进行边缘云函数式 AI 推理 |
+
+<Note>
+  Pi 框架还支持此处未列出的其他提供商。若你偏好的提供商与 Pi 兼容，在设置中点击 **添加提供商** 时可能已可用。
+</Note>
+
+## 添加提供商
+
+<Steps>
+  <Step title="打开设置">
+    从菜单按钮打开 **对话抽屉**，然后点击 **设置**。
+  </Step>
+  <Step title="进入提供商">
+    在设置菜单中点击 **模型提供商**，查看当前已配置的提供商。
+  </Step>
+  <Step title="添加新提供商">
+    点击 **添加提供商**，从列表中选择目标提供商。
+  </Step>
+  <Step title="配置凭证">
+    在所选提供商支持时，选择 API 密钥、OAuth 或环境凭证。
+  </Step>
+  <Step title="保存">
+    获取提供商的模型目录，启用你需要的模型，然后点击 **保存**。
+  </Step>
+</Steps>
+
+## 切换模型
+
+点击 **顶栏** 中显示的 **模型选择器**。列表会展示所有已配置提供商下的可用模型。点击任意模型即可切换 — 更改在下一条消息生效。
+
+## 模型配置
+
+对于暴露推理控制的模型，Aether 允许你从该模型报告的思考级别中选择。打开模型选择器即可更改所选模型的推理级别。
+
+<Note>
+  API 密钥仅保存在设备上 Aether 的私有应用存储中。除发往对应提供商自己的 API 端点外，不会发送到任何其他地方。
+</Note>
+
+<Tip>
+  当前推荐模型包括 **GPT 5.6 Sol**、**Gemini 3.5 Flash**、**Grok 4.5** 和 **Claude Fable 5**。
+</Tip>

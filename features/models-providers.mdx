@@ -4,15 +4,15 @@ sidebarTitle: "Models & Providers"
 description: "Aether supports OpenAI, Anthropic, Google, DeepSeek, Groq, Mistral, Cloudflare, and more. Learn how to add providers and switch models."
 ---
 
-Aether supports a wide range of LLM providers via the Pi framework that powers it under the hood. You bring your own API keys — nothing is proxied through Aether's servers. Your keys go directly from your device to each provider's API endpoint.
+Aether supports a wide range of LLM providers via the Pi framework that powers it under the hood. You bring your own credentials — nothing is proxied through Aether's servers. Your credentials go directly from your device to each provider's API endpoint.
 
 ## Supported Providers
 
 | Provider | Notes |
 |---|---|
-| **OpenAI** | GPT-4o, o1, o3, and all other OpenAI chat models |
-| **Anthropic (Claude)** | Claude 3.5/3.7 Sonnet, Claude Opus, and the full Claude family |
-| **Google (Gemini)** | Gemini 1.5 Pro/Flash, Gemini 2.0, and other Gemini models |
+| **OpenAI** | GPT 5.6 Sol and other OpenAI chat models |
+| **Anthropic (Claude)** | Claude Fable 5 and other Claude models |
+| **Google (Gemini)** | Gemini 3.5 Flash and other Gemini models |
 | **DeepSeek** | DeepSeek-V3, DeepSeek-R1 |
 | **Groq** | Ultra-fast inference for Llama, Mixtral, and Gemma models |
 | **Mistral** | Mistral Large, Mistral Small, Codestral, and others |
@@ -26,34 +26,34 @@ Aether supports a wide range of LLM providers via the Pi framework that powers i
 
 <Steps>
   <Step title="Open Settings">
-    Tap the **gear icon** in the top-right corner of the chat screen to open Settings.
+    Open the **conversation drawer** from the menu button, then tap **Settings**.
   </Step>
   <Step title="Go to Providers">
-    Tap **Providers** in the Settings menu to see your currently configured providers.
+    Tap **Model Providers** in the Settings menu to see your currently configured providers.
   </Step>
   <Step title="Add a new Provider">
     Tap **Add Provider** and select your desired provider from the list.
   </Step>
-  <Step title="Enter your API key">
-    Paste or type your API key into the key field. You can obtain keys from each provider's developer console.
+  <Step title="Configure credentials">
+    Choose API key, OAuth, or environment credentials when the selected provider supports them.
   </Step>
   <Step title="Save">
-    Tap **Save**. Aether immediately validates the key and makes that provider's models available in the model selector.
+    Fetch the provider's model catalog, enable the models you want, then tap **Save**.
   </Step>
 </Steps>
 
 ## Switching Models
 
-Tap the **model selector** displayed above the composer input bar. The list shows every model available across all of your configured providers. Tap any model to switch to it — the change takes effect on the next message you send.
+Tap the **model selector** displayed in the top bar. The list shows every model available across all of your configured providers. Tap any model to switch to it — the change takes effect on the next message you send.
 
 ## Model Configuration
 
-For models that expose reasoning controls — such as OpenAI's o-series (o1, o3) — Aether lets you adjust the **reasoning effort** level. After selecting an o-series model, tap the model name or the configuration icon to reveal the effort slider and choose **low**, **medium**, or **high** based on the trade-off between speed and depth of reasoning you need.
+For models that expose reasoning controls, Aether lets you choose from the thinking levels reported for that model. Open the model selector to change the reasoning level for the selected model.
 
 <Note>
   API keys are stored only on your device within Aether's private app storage. They are never sent anywhere other than the respective provider's own API endpoint.
 </Note>
 
 <Tip>
-  Use **DeepSeek** or **Groq** for fast, cost-effective responses on straightforward tasks. Reach for **Claude** or **GPT-4o** when you need deep reasoning, nuanced writing, or complex multi-step problem solving.
+  Current recommended models include **GPT 5.6 Sol**, **Gemini 3.5 Flash**, **Grok 4.5**, and **Claude Fable 5**.
 </Tip>

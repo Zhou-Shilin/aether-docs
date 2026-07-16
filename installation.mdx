@@ -51,12 +51,12 @@ Aether requests the following permissions during onboarding or at runtime:
 | `POST_NOTIFICATIONS` | Sends notifications when agent tasks complete or require your attention |
 | `FOREGROUND_SERVICE` | Keeps agent tasks running in the background while you use other apps |
 | `FOREGROUND_SERVICE_DATA_SYNC` | Classifies the foreground service as a data-sync task (required by Android for background execution) |
-| `SCHEDULE_EXACT_ALARM` | Enables scheduled and time-triggered agent tasks |
-| `USE_EXACT_ALARM` | Allows scheduling exact alarms on devices that restrict `SCHEDULE_EXACT_ALARM` |
+| `SCHEDULE_EXACT_ALARM` | Improves the timing accuracy of scheduled and time-triggered agent tasks |
+| `USE_EXACT_ALARM` | Allows Aether to use exact alarms where Android grants that capability |
 | `RECEIVE_BOOT_COMPLETED` | Reschedules pending tasks automatically after your device restarts |
-| `REQUEST_INSTALL_PACKAGES` | Allows Aether to prompt you to install extension packages |
+| `REQUEST_INSTALL_PACKAGES` | Allows Aether to install downloaded app updates through the Android package installer |
 | `com.termux.permission.RUN_COMMAND` | **Optional.** Required to run commands inside a Termux session for Android shell integration |
-| `moe.shizuku.manager.permission.API_V23` | **Optional.** Required for Shizuku integration, which enables privileged system operations in Agent Mode |
+| `moe.shizuku.manager.permission.API_V23` | **Optional.** Required to authorize Agent Mode's isolated virtual display through Shizuku |
 
 Aether requests only what it needs. Optional permissions are never requested unless you enable the corresponding integration.
 
@@ -66,11 +66,11 @@ Aether requests only what it needs. Optional permissions are never requested unl
 
 [Termux](https://termux.dev/) is a terminal emulator and Linux environment for Android. When installed alongside Aether, it allows the agent to run commands directly in a Termux session — useful for tasks that benefit from a persistent shell environment or Termux packages.
 
-Install Termux from [F-Droid](https://f-droid.org/en/packages/com.termux/) (recommended) or the [Play Store](https://play.google.com/store/apps/details?id=com.termux).
+Install Termux from [F-Droid](https://f-droid.org/en/packages/com.termux/) (recommended) or [GitHub Releases](https://github.com/termux/termux-app/releases). The Play Store version does not provide the `RUN_COMMAND` integration Aether requires.
 
 ### Shizuku
 
-[Shizuku](https://shizuku.rikka.app/) lets apps use Android system APIs with elevated privileges without requiring a fully rooted device. Enabling Shizuku integration in Aether unlocks Agent Mode's privileged device automation capabilities — such as installing packages, modifying system settings, and performing other operations that normally require root.
+[Shizuku](https://shizuku.rikka.app/) lets apps use Android system APIs with elevated privileges without requiring a fully rooted device. Enabling Shizuku integration in Aether authorizes Agent Mode to create and control an isolated Android virtual display.
 
 Install Shizuku from the [Play Store](https://play.google.com/store/apps/details?id=moe.shizuku.privileged.api) or [GitHub Releases](https://github.com/RikkaApps/Shizuku/releases).
 

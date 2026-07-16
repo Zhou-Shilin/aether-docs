@@ -25,23 +25,23 @@ Get Aether running on your Android device with a working LLM provider. By the en
     The first time you open Aether, an onboarding screen walks you through the required setup:
 
     - Grant **Notifications** permission so Aether can alert you when agent tasks complete.
-    - Grant **Alarm scheduling** permission so Aether can run scheduled tasks.
+    - Choose whether to set up the built-in Alpine runtime or Termux with optional Agent Mode.
 
     Follow the on-screen prompts for each step. You can revisit permissions later in your Android settings.
   </Step>
   <Step title="Add an LLM provider">
     Aether needs at least one LLM provider configured before you can chat:
 
-    1. Tap the **Settings** icon (⚙️) in the top-right corner of the app.
-    2. Select **Providers**.
+    1. Open the conversation drawer from the menu button, then tap **Settings**.
+    2. Select **Model Providers**.
     3. Tap **Add Provider** and choose your preferred service — OpenAI, Anthropic, Google, DeepSeek, Groq, Mistral, Cloudflare, or any other supported option.
-    4. Enter your **API key** for that provider.
-    5. Tap **Save**.
+    4. Configure the **API key**, **OAuth**, or **environment credentials** supported by that provider.
+    5. Fetch and enable the models you want, then tap **Save**.
   </Step>
   <Step title="Select a model">
     Back on the main chat screen:
 
-    1. Tap the **model selector** in the message composer bar at the bottom of the screen.
+    1. Tap the **model selector** in the top bar.
     2. Browse the list of models from your configured provider and tap the one you want to use.
   </Step>
   <Step title="Send your first message">
@@ -50,9 +50,9 @@ Get Aether running on your Android device with a working LLM provider. By the en
 </Steps>
 
 <Tip>
-  Toggle **Agent Mode** in the composer (the robot icon) to unlock the full agentic experience. With Agent Mode enabled, Aether can execute shell commands, use CLI tools inside its Alpine Linux environment, and perform multi-step reasoning tasks — not just answer questions.
+  Toggle **Agent Mode** in the composer menu (the pointer icon) when you want Aether to control apps on an isolated Android virtual display. Shell commands, Skills, MCP servers, and multi-step tool calls are available without Agent Mode.
 </Tip>
 
 <Note>
-  The first time you send a message with **Agent Mode** enabled, Aether automatically downloads and installs the Alpine Linux root filesystem in the background. This download is approximately **100 MB**. Make sure you're on Wi-Fi before enabling Agent Mode for the first time.
+  The Alpine Linux root filesystem is bundled with Aether and extracted when you initialize Alpine. It is not downloaded when you enable Agent Mode.
 </Note>

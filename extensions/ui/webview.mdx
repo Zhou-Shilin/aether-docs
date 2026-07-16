@@ -14,12 +14,16 @@ ui.web(opts: WebNodeOptions)
 
 ## Options
 
-<ParamField body="html" type="string" required>
-  The complete HTML content to render inside the WebView. This is a full HTML document string — include `<!DOCTYPE html>` and a `<body>` for reliable rendering across Android versions.
+<ParamField body="html" type="string">
+  The complete HTML content to render inside the WebView when `url` is omitted. This is a full HTML document string — include `<!DOCTYPE html>` and a `<body>` for reliable rendering across Android versions.
+</ParamField>
+
+<ParamField body="url" type="string">
+  A URL to load instead of the inline `html` content.
 </ParamField>
 
 <ParamField body="height" type="number">
-  Explicit height in dp. If omitted, the WebView fills the available vertical space in its container.
+  Explicit height in dp. Defaults to `240`.
 </ParamField>
 
 ---
@@ -113,9 +117,9 @@ Aether calls `render` every time the extension's state is invalidated, so the We
 ---
 
 <Warning>
-The WebView has full network access. Do not render untrusted HTML content or resolve external URLs without considering the security implications. An attacker who can influence the `html` value can execute arbitrary JavaScript with access to the `Aether.postMessage` bridge and all enabled device capabilities.
+The WebView has full network access, with file and content access enabled. Do not render untrusted HTML content or resolve external URLs without considering the security implications. An attacker who can influence the `html` value can execute arbitrary JavaScript and invoke actions registered by that extension through the `Aether.postMessage` bridge.
 </Warning>
 
 <Tip>
-Use `Aether.postMessage` for any interaction that needs to trigger extension logic — state updates, notifications, navigation, or service calls. The message must be a JSON string with an `action` field and an optional `args` object. There is no return value from `postMessage`; use storage and `aether.invalidate()` to push updated data back into the WebView on the next render.
+Use `Aether.postMessage` for any interaction that needs to trigger extension logic — state updates, notifications, navigation, or service calls. The message must be a JSON string with an `action` field and an optional `args` object. There is no return value from `postMessage`; storage writes trigger a re-render automatically, and `aether.invalidate()` can refresh non-storage state.
 </Tip>

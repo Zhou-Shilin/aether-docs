@@ -1,0 +1,89 @@
+---
+title: "Native 服务注册：覆盖 Aether 核心服务"
+sidebarTitle: "服务"
+description: "通过 Native Mod 注册更高优先级的服务实现，以覆盖 Aether 在 mod kernel 中的内置 skills、state 或自定义服务。"
+---
+
+mod kernel 的服务注册表按优先级排序。通过注册优先级高于 Aether 内置实现的服务，你的 Native Mod 会成为该服务 ID 的活跃实现。移除你的注册后，会自动恢复下一较低优先级的实现。
+
+## API
+
+在 `onLoad` 中调用 `context.registerService()`：
+
+```kotlin
+context.registerService(
+    id: String,
+    description: String = "",
+    priority: Int = 100,
+    methods: List<AetherModServiceMethod>,
+    handler: AetherModServiceHandler
+)
+```
+
+`AetherModServiceHandler` 是带有一个 suspend 方法的 `fun interface`：
+
+```kotlin
+suspend fun invoke(method: String, args: JSONObject): JSONObject
+```
+
+| Parameter | Description |
+|---|---|
+| `id` | 服务标识符（例如 `"skills"`、`"state"`，或自定义字符串）。 |
+| `description` | 可选的服务可读描述（默认为 `""`）。 |
+| `priority` | 数值越高优先级越高。Aether 核心服务使用刻意较低的优先级。默认为 `100`。 |
+| `methods` | 描述此实现所处理方法的 `AetherModServiceMethod` 实例列表。 |
+| `handler` | `AetherModServiceHandler`，以方法名与参数 `JSONObject` 调用；返回结果 `JSONObject`。 |
+
+## 优先级规则
+
+Aether 核心服务使用刻意较低的优先级，以便 Native Mods 用标准优先级值即可覆盖它们。使用优先级 **`500`** 可可靠覆盖任意内置服务。移除你的注册（调用返回的清理 lambda）会恢复下一较低优先级的实现，可能是其他 mod 的注册，也可能是 Aether 内置实现。
+
+## 示例 — 覆盖 skills 服务
+
+以下 mod 将自身注册为 `skills` 服务的活跃实现，并返回空 skill 列表：
+
+```kotlin MyNativeMod.kt
+class MyNativeMod : AetherNativeMod {
+    override fun onLoad(context: AetherNativeModContext) {
+        context.registerService(
+            id = "skills",
+            priority = 500,
+            methods = listOf(AetherModServiceMethod("list")),
+        ) { method, args ->
+            when (method) {
+                "list" -> JSONObject().put("skills", JSONArray())
+                else -> throw UnsupportedOperationException("Unknown method: $method")
+            }
+        }
+    }
+}
+```
+
+`context.registerService()` 返回清理 lambda。若需要在运行时注销服务，请自行保留并调用它；当前 Native Mod 管理器不会调用 `onUnload`。
+
+## 内置服务
+
+以下服务由 Aether 核心注册：
+
+### `skills`
+
+| Method | Arguments |
+|---|---|
+| `list` | — |
+| `getSelection` | — |
+| `setSelection` | `ids`, `scope`, `session_id?` |
+| `setSelected` | `skill_id`, `selected`, `scope`, `session_id?` |
+
+有效的 `scope` 值：`current`、`default` / `global`、`both` / `current_and_default`。
+
+### `state`
+
+| Method | Arguments |
+|---|---|
+| `get` | `path` |
+| `transaction` | `operations` |
+
+<Tip>
+  你可以从 Native Mod 暴露全新服务 — 而不仅是覆盖现有服务。其他扩展通过
+  `aether.services.list()` 发现它们，并通过 `aether.services.invoke()` 调用。
+</Tip>

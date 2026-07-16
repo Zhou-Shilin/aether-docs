@@ -1,0 +1,79 @@
+---
+title: "Host Methods：Aether 扩展的直接 Android 桥接"
+sidebarTitle: "Host Methods"
+description: "使用 aether.host.invoke() 调用 Android host 方法，用于应用控制、草稿管理、会话导航、模型切换与 Alpine 或 Termux 运行时执行。"
+---
+
+`aether.host.invoke()` 提供对尚未被 state API 或服务注册表覆盖的 Android 侧操作的直接访问。适用于发送消息、打开界面或执行 Alpine 或 Termux 命令等应用特定任务。
+
+## API 签名
+
+```typescript
+readonly host: {
+  invoke(method: string, args?: object): Promise<object>;
+};
+```
+
+## Host 方法参考
+
+| 方法 | 用途 |
+|---|---|
+| `app.getState` | 读取设置、会话、草稿、Skills 与运行时 UI 状态 |
+| `app.setDraftInput` | 替换输入栏文本 |
+| `app.appendDraftInput` | 向输入栏追加文本 |
+| `app.sendMessage` | 设置可选文本并提交、排队或引导 |
+| `app.newChat` | 开始新的草稿对话 |
+| `app.selectSession` | 按 ID 选择会话 |
+| `app.openScreen` | 打开 `"chat"` 或 `"settings"` |
+| `app.pauseGeneration` | 暂停当前生成 |
+| `app.setReasoningEffort` | 更改推理强度级别 |
+| `app.setAgentMode` | 开关 Agent 模式 |
+| `app.setModel` | 按 key 选择模型 |
+| `app.notify` | 显示 Android toast 通知 |
+| `settings.get` | 读取设置与提供商 |
+| `settings.patch` | 修补支持的设置 |
+| `runtime.execute` | 执行任意 Alpine/Termux 命令 |
+
+## 代码示例
+
+```typescript
+// Read the current app state
+const state = await aether.host.invoke("app.getState");
+
+// Replace composer text
+await aether.host.invoke("app.setDraftInput", { text: "Hello!" });
+
+// Send a message immediately
+await aether.host.invoke("app.sendMessage", { text: "Run the tests" });
+
+// Start a new chat
+await aether.host.invoke("app.newChat");
+
+// Navigate to settings
+await aether.host.invoke("app.openScreen", { screen: "settings" });
+
+// Execute a shell command in Alpine
+const result = await aether.host.invoke("runtime.execute", {
+  command: "ls ~/.aether/extensions",
+  environment: "alpine",
+});
+
+// Show a toast notification
+await aether.host.invoke("app.notify", { message: "Task complete!" });
+
+// Toggle agent mode
+await aether.host.invoke("app.setAgentMode", { enabled: true });
+
+// Switch model
+await aether.host.invoke("app.setModel", {
+  model_key: "<provider-config-id>::<model-id>",
+});
+```
+
+<Note>
+  在支持的场景下，状态变更优先使用 state API（`aether.state.patch`）与服务注册表（`aether.services.invoke`）。对尚未被这些 API 覆盖的操作再使用 host methods。
+</Note>
+
+<Tip>
+  `runtime.execute` 适合需要在扩展逻辑中运行 shell 命令、又不想卷入主 Agent 循环的场景。
+</Tip>

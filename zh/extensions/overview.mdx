@@ -1,0 +1,55 @@
+---
+title: "Aether Extension 与 Mod Kernel：开发者概览"
+sidebarTitle: "概览"
+description: "使用 TypeScript 或 Kotlin 构建扩展，为 Aether 添加工具、UI 表面与原生 Android 能力。了解三层 mod 架构。"
+---
+
+Aether 的 Mod Kernel 让你可以构建与应用深度集成的扩展 — 从添加新的 Agent 工具，到替换内置 UI 组件，或直接访问 Android API。单个扩展包可同时覆盖全部三层，在 Pi Agent 逻辑、可热重载的 UI 表面与完整原生 Kotlin 模块之间共享代码与配置。
+
+## 三层扩展架构
+
+每一层面向 Aether 技术栈的不同部分，语言、加载方式与访问面各不相同。
+
+| 层级 | 语言 | 加载方式 | 访问级别 |
+|------|----------|---------|--------------|
+| `pi.extensions` | TypeScript/JS | 热重载 | Pi Agent 工具、命令、钩子 |
+| `aether.extensions` | TypeScript/JS | 热重载 | Aether Script Mod API v2（UI、状态、服务） |
+| `aether.native` | Kotlin/DEX | 进程启动时（需重启） | 完整 Android、Compose 与反射 |
+
+`pi.extensions` 层与 Pi Coding Agent 层集成 — 注册 Agent 会执行的命令、工具与钩子。`aether.extensions` 层提供 Script Mod API v2：注册 UI 表面、替换或包装内置 Compose 组件、定义全屏页面、读写应用状态、调用服务并拦截操作。`aether.native` 层将编译后的 Kotlin DEX 代码直接加载进应用进程，可不受限地访问全部 Android API、Compose 可组合项与 Aether 实现类。
+
+## 无权限沙箱
+
+扩展是受信任代码。设计上没有权限沙箱。安装扩展意味着信任它可使用 Node.js 运行时、Android 应用上下文、全部 Aether 服务以及 Alpine/Termux 工作区。Native Mod 可直接使用反射、JNI 或 Android API。公开的注册 API 是为了便利与互操作，而非安全边界。请只从你信任的来源安装扩展。
+
+## 一个包，多层
+
+单个 `package.json` 可同时声明全部三层。`pi.extensions` 数组、`aether.extensions` 数组与 `aether.native` 对象彼此独立 — 你可以任意组合，指向不同入口文件，或通过命名导出在 `pi.extensions` 与 `aether.extensions` 之间共享同一入口。这样你可以发布一个在 Pi Coding Agent 与 Aether Android 应用中都能正确工作的组合包。
+
+## 安装扩展
+
+导入的扩展包位于 Aether 管理的 Alpine 文件系统中的 `~/.aether/extensions`。你可以用两种方式安装扩展：
+
+- **导入 zip**：打开 设置 → 扩展，点按 **导入扩展**，选择 zip 文件。Aether 会将包解压到 `~/.aether/extensions` 并立即加载。
+- **npm 包**：通过 Aether 的包管理界面添加包，并在其 `package.json` 中声明 `aether.extensions` 条目。Aether 会在加载时发现它，并与本地安装的扩展一并加载。
+
+## 热重载
+
+触发扩展重载时，Script Mods 与 Pi 扩展会在不重启 Aether 的情况下重载。入口文件不会被自动监视变更。扩展运行时会重新导入更新后的文件，再次调用你的工厂函数，并触发 UI 刷新。Native Mod 仅在应用进程启动时发现并加载；安装、更新、移除或修改 Native Mod 需要重启 Aether。
+
+## 深入了解
+
+<CardGroup cols={2}>
+  <Card title="包格式" icon="file-code" href="/zh/extensions/package-format">
+    了解全部三层的 `package.json` 结构，含字段级参考与示例。
+  </Card>
+  <Card title="快速开始" icon="rocket" href="/zh/extensions/quickstart">
+    几分钟内构建并安装你的第一个 Script Mod 扩展。
+  </Card>
+  <Card title="Script Mod API" icon="code" href="/zh/extensions/api/surfaces">
+    注册 UI 表面、组件、页面、操作与服务调用。
+  </Card>
+  <Card title="Native Mods" icon="microchip" href="/zh/extensions/native/overview">
+    编写具备完整 Android 与 Compose 访问能力的 Kotlin DEX mod。
+  </Card>
+</CardGroup>

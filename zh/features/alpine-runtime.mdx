@@ -1,0 +1,64 @@
+---
+title: "内置 Alpine Linux 运行时：命令执行"
+sidebarTitle: "Alpine 运行时"
+description: "Aether 内置由 proot 驱动的托管 Alpine Linux 虚拟机。可直接从 Agent 运行 shell 命令、安装软件包并执行脚本。"
+---
+
+Aether 附带基于 [proot](https://proot-me.github.io/) 运行的 Alpine Linux arm64 rootfs，在无需 root 的情况下为 AI Agent 提供完整 Linux 命令环境。该运行时独立于 Agent 模式。
+
+## 工作原理
+
+**proot** 通过在用户态拦截系统调用，提供类似 chroot 的文件系统隔离 — 无需 root，无需修改内核。Alpine rootfs 打包在 Aether 应用资源中，首次使用时自动解压。
+
+初始化完成后，Agent 可在此环境中运行任意兼容 Alpine 的命令：
+
+```bash
+apk add python3     # 安装软件包
+python3 script.py   # 运行代码
+node index.js       # JavaScript 运行时
+git clone <repo>    # 版本控制
+curl https://...    # HTTP 请求
+```
+
+proot 环境完全自包含。你安装或修改的内容都留在 Alpine rootfs 内，不会影响 Android 系统的其他部分。
+
+## 首次设置
+
+可在引导流程中初始化 Alpine，或从 **设置 → Alpine** 进入。Aether 会将捆绑的运行时资源解压到其私有应用存储；不会下载 rootfs，设置也不依赖 Agent 模式。
+
+## 包含内容
+
+Aether 提供标准 **Alpine Linux arm64 基础系统**。开箱即用包含 Alpine shell（`ash`）、核心工具（`busybox`）以及 `apk` 包管理器。之后可安装 Alpine 软件源中的任意包：
+
+```bash
+apk add python3 py3-pip nodejs npm git curl wget ffmpeg
+```
+
+软件包安装到 Alpine rootfs 中，并在 Aether 会话之间持久保存。
+
+## 使用 Shell 工具
+
+当 shell 命令选择 Alpine 时，它会运行在 **Alpine 环境内部**。解释路径时请注意：
+
+| Alpine 内路径 | 指向 |
+|---|---|
+| `/root` | Alpine 的 home 目录（在 rootfs 内） |
+| `/workspace` | Aether 托管的 Alpine 工作区 |
+| `/tmp` | Alpine 的临时目录 |
+| `/` | Alpine rootfs 根目录，不是 Android 的 `/` |
+
+## 访问 Android 存储
+
+Aether 不会将 Android 共享存储以 `/sdcard` 的形式绑定到 Alpine。通过 Aether 工作区工具暴露的文件由 `/workspace` 管理。
+
+## 数据持久化
+
+Alpine rootfs 位于 Aether 的 **私有应用存储** 中，跨会话持久保存。你（或 Agent）在 Alpine 的 `~` 中创建的文件，下次打开 Aether 时仍然可用。可以把它理解为与 Aether 安装绑定的持久 Linux 主目录。
+
+<Note>
+  Alpine 仅支持 **arm64-v8a**。这也是 Aether 需要 arm64（64 位 ARM）Android 设备的原因 — 捆绑的 rootfs 二进制针对该架构编译。
+</Note>
+
+<Tip>
+  用一条命令即可安装 Python、Node.js 或其他运行时 — 例如让 Agent 执行 `apk add python3 nodejs`。安装后，这些运行时在之后的会话中都可直接使用，无需重装。
+</Tip>

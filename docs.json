@@ -12,98 +12,203 @@
   },
   "favicon": "https://media.brand.dev/106187a1-4c5d-40b9-94c8-009813a7f740.png",
   "navigation": {
-    "tabs": [
+    "languages": [
       {
-        "tab": "User Guide",
-        "groups": [
+        "language": "en",
+        "tabs": [
           {
-            "group": "Get Started",
-            "pages": [
-              "introduction",
-              "quickstart",
-              "installation"
+            "tab": "User Guide",
+            "groups": [
+              {
+                "group": "Get Started",
+                "pages": [
+                  "introduction",
+                  "quickstart",
+                  "installation"
+                ]
+              },
+              {
+                "group": "Core Features",
+                "pages": [
+                  "features/models-providers",
+                  "features/agent-mode",
+                  "features/skills-mcp",
+                  "features/alpine-runtime",
+                  "features/termux-shizuku"
+                ]
+              },
+              {
+                "group": "Configuration",
+                "pages": [
+                  "configuration/settings",
+                  "configuration/providers",
+                  "configuration/scheduled-tasks"
+                ]
+              },
+              {
+                "group": "Help",
+                "pages": [
+                  "help/faq",
+                  "help/troubleshooting"
+                ]
+              }
             ]
           },
           {
-            "group": "Core Features",
-            "pages": [
-              "features/models-providers",
-              "features/agent-mode",
-              "features/skills-mcp",
-              "features/alpine-runtime",
-              "features/termux-shizuku"
-            ]
-          },
-          {
-            "group": "Configuration",
-            "pages": [
-              "configuration/settings",
-              "configuration/providers",
-              "configuration/scheduled-tasks"
-            ]
-          },
-          {
-            "group": "Help",
-            "pages": [
-              "help/faq",
-              "help/troubleshooting"
+            "tab": "Extension Developer",
+            "groups": [
+              {
+                "group": "Overview",
+                "pages": [
+                  "extensions/overview",
+                  "extensions/package-format",
+                  "extensions/quickstart"
+                ]
+              },
+              {
+                "group": "Script Mod API",
+                "pages": [
+                  "extensions/api/surfaces",
+                  "extensions/api/components",
+                  "extensions/api/pages",
+                  "extensions/api/state",
+                  "extensions/api/services",
+                  "extensions/api/events-intercept",
+                  "extensions/api/storage",
+                  "extensions/api/host-methods"
+                ]
+              },
+              {
+                "group": "UI Reference",
+                "pages": [
+                  "extensions/ui/declarative-ui",
+                  "extensions/ui/webview"
+                ]
+              },
+              {
+                "group": "Native Mods",
+                "pages": [
+                  "extensions/native/overview",
+                  "extensions/native/services",
+                  "extensions/native/interceptors",
+                  "extensions/native/compose",
+                  "extensions/native/safe-mode"
+                ]
+              },
+              {
+                "group": "Pi Extensions",
+                "pages": [
+                  "extensions/pi/overview",
+                  "extensions/pi/tools-commands"
+                ]
+              },
+              {
+                "group": "Examples",
+                "pages": [
+                  "extensions/examples/combined-extension",
+                  "extensions/examples/global-skills-mod"
+                ]
+              }
             ]
           }
         ]
       },
       {
-        "tab": "Extension Developer",
-        "groups": [
+        "language": "zh",
+        "tabs": [
           {
-            "group": "Overview",
-            "pages": [
-              "extensions/overview",
-              "extensions/package-format",
-              "extensions/quickstart"
+            "tab": "用户指南",
+            "groups": [
+              {
+                "group": "开始使用",
+                "pages": [
+                  "zh/introduction",
+                  "zh/quickstart",
+                  "zh/installation"
+                ]
+              },
+              {
+                "group": "核心功能",
+                "pages": [
+                  "zh/features/models-providers",
+                  "zh/features/agent-mode",
+                  "zh/features/skills-mcp",
+                  "zh/features/alpine-runtime",
+                  "zh/features/termux-shizuku"
+                ]
+              },
+              {
+                "group": "配置",
+                "pages": [
+                  "zh/configuration/settings",
+                  "zh/configuration/providers",
+                  "zh/configuration/scheduled-tasks"
+                ]
+              },
+              {
+                "group": "帮助",
+                "pages": [
+                  "zh/help/faq",
+                  "zh/help/troubleshooting"
+                ]
+              }
             ]
           },
           {
-            "group": "Script Mod API",
-            "pages": [
-              "extensions/api/surfaces",
-              "extensions/api/components",
-              "extensions/api/pages",
-              "extensions/api/state",
-              "extensions/api/services",
-              "extensions/api/events-intercept",
-              "extensions/api/storage",
-              "extensions/api/host-methods"
-            ]
-          },
-          {
-            "group": "UI Reference",
-            "pages": [
-              "extensions/ui/declarative-ui",
-              "extensions/ui/webview"
-            ]
-          },
-          {
-            "group": "Native Mods",
-            "pages": [
-              "extensions/native/overview",
-              "extensions/native/services",
-              "extensions/native/interceptors",
-              "extensions/native/compose",
-              "extensions/native/safe-mode"
-            ]
-          },
-          {
-            "group": "Pi Extensions",
-            "pages": [
-              "extensions/pi/overview",
-              "extensions/pi/tools-commands"
-            ]
-          },
-          {
-            "group": "Examples",
-            "pages": [
-              "extensions/examples/combined-extension",
-              "extensions/examples/global-skills-mod"
+            "tab": "扩展开发",
+            "groups": [
+              {
+                "group": "概览",
+                "pages": [
+                  "zh/extensions/overview",
+                  "zh/extensions/package-format",
+                  "zh/extensions/quickstart"
+                ]
+              },
+              {
+                "group": "Script Mod API",
+                "pages": [
+                  "zh/extensions/api/surfaces",
+                  "zh/extensions/api/components",
+                  "zh/extensions/api/pages",
+                  "zh/extensions/api/state",
+                  "zh/extensions/api/services",
+                  "zh/extensions/api/events-intercept",
+                  "zh/extensions/api/storage",
+                  "zh/extensions/api/host-methods"
+                ]
+              },
+              {
+                "group": "UI 参考",
+                "pages": [
+                  "zh/extensions/ui/declarative-ui",
+                  "zh/extensions/ui/webview"
+                ]
+              },
+              {
+                "group": "Native Mods",
+                "pages": [
+                  "zh/extensions/native/overview",
+                  "zh/extensions/native/services",
+                  "zh/extensions/native/interceptors",
+                  "zh/extensions/native/compose",
+                  "zh/extensions/native/safe-mode"
+                ]
+              },
+              {
+                "group": "Pi 扩展",
+                "pages": [
+                  "zh/extensions/pi/overview",
+                  "zh/extensions/pi/tools-commands"
+                ]
+              },
+              {
+                "group": "示例",
+                "pages": [
+                  "zh/extensions/examples/combined-extension",
+                  "zh/extensions/examples/global-skills-mod"
+                ]
+              }
             ]
           }
         ]

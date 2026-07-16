@@ -1,0 +1,96 @@
+---
+title: "Aether Script Mod 快速开始：构建你的第一个扩展"
+sidebarTitle: "快速开始"
+description: "从零创建最小的 Aether Script Mod 扩展：配置包、添加 UI 表面、处理操作，并在应用中安装。"
+---
+
+本指南带你创建最小扩展：在聊天输入框上方添加一个按钮，点击后插入预设提示词。你将使用 Aether Script Mod API v2 — 无需 Kotlin 或原生工具链。
+
+<Steps>
+  <Step title="创建扩展目录">
+    为扩展新建目录并进入：
+
+    ```bash
+    mkdir my-first-extension && cd my-first-extension
+    ```
+  </Step>
+
+  <Step title="创建 package.json">
+    创建指向入口文件的 `package.json`：
+
+    ```json package.json
+    {
+      "name": "my-first-extension",
+      "version": "1.0.0",
+      "aether": {
+        "extensions": ["./index.ts"]
+      }
+    }
+    ```
+
+    `aether.extensions` 数组告诉 Aether 将哪些文件作为 Script Mod 加载。需要时可列出多个入口文件，此处一个即可。
+  </Step>
+
+  <Step title="创建扩展入口文件">
+    创建带有表面注册与操作处理程序的 `index.ts`：
+
+    ```typescript index.ts
+    import { defineAetherExtension, ui } from "@aether/extension-api";
+
+    export const activateAether = defineAetherExtension((aether) => {
+      // Register an action handler
+      aether.registerAction("insert-prompt", () => {
+        aether.state.patch("draft_input", "Summarize the latest changes in this repo.");
+      });
+
+      // Add a surface above the composer
+      aether.registerSurface("chat.composer.top", {
+        id: "quick-prompt",
+        render: () =>
+          ui.button("Insert summary prompt", "insert-prompt"),
+      });
+    });
+    ```
+
+    `defineAetherExtension` 包装你的工厂函数，并为 `aether` API 提供完整 TypeScript 类型。`registerAction` 将字符串 `"insert-prompt"` 绑定到写入 `draft_input` 状态路径的处理程序。`registerSurface` 将按钮注入 `chat.composer.top` 插槽 — 即消息输入框正上方。
+  </Step>
+
+  <Step title="打包为 zip">
+    将目录打包为 zip 归档：
+
+    ```bash
+    zip -r my-first-extension.zip .
+    ```
+
+    zip 可将包放在归档根目录，或放在恰好一层顶层包目录中。
+  </Step>
+
+  <Step title="在 Aether 中安装">
+    打开对话抽屉，然后前往 **设置** → **扩展** → **导入扩展**。选择 `my-first-extension.zip`。Aether 会将包解压到 `~/.aether/extensions` 并立即热加载扩展 — 无需重启。
+  </Step>
+
+  <Step title="测试扩展">
+    进入聊天界面。你应能在输入框上方看到 **Insert summary prompt** 按钮。点击它 — Aether 会调用你的 `insert-prompt` 操作处理程序，用预设文本修补 `draft_input`。输入框会立刻填入内容。
+
+    若按钮未出现，打开 **设置 → 扩展**，确认扩展已列出且已启用。在该页面查看错误日志以排查加载时问题。
+  </Step>
+</Steps>
+
+## 后续步骤
+
+使用完整 Script Mod API 进一步扩展你的 mod：
+
+<CardGroup cols={2}>
+  <Card title="UI 表面" icon="layer-group" href="/zh/extensions/api/surfaces">
+    在更多聊天与设置插槽中注册内容，或完全替换内置 Compose 组件。
+  </Card>
+  <Card title="状态 API" icon="database" href="/zh/extensions/api/state">
+    读写应用状态路径，包括 `draft_input`、`selected_skill_ids`、`agent_mode_enabled` 等。
+  </Card>
+  <Card title="页面" icon="file" href="/zh/extensions/api/pages">
+    添加全屏抽屉页面，通过 TypeScript 驱动原生 Compose 布局。
+  </Card>
+  <Card title="Native Mods" icon="microchip" href="/zh/extensions/native/overview">
+    编写在进程启动时加载的 Kotlin DEX mod，解锁完整 Android 与 Compose 访问能力。
+  </Card>
+</CardGroup>

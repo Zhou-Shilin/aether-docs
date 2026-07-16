@@ -1,7 +1,7 @@
 ---
 title: "Configure LLM Providers and API Keys in Aether"
 sidebarTitle: "Providers"
-description: "Add your OpenAI, Anthropic, Google, DeepSeek, Groq, Mistral, or Cloudflare API keys to Aether and start using any supported LLM model."
+description: "Add your OpenAI, Anthropic, Google, DeepSeek, Groq, Mistral, or Cloudflare credentials to Aether and start using any supported LLM model."
 ---
 
 Aether uses your own API keys to call LLM providers directly from your device. There is no proxying, no Aether account, and no subscription — you bring your keys, and Aether connects straight to the provider's API on your behalf.
@@ -10,9 +10,9 @@ Aether uses your own API keys to call LLM providers directly from your device. T
 
 | Provider | API Key Location | Notes |
 |---|---|---|
-| **OpenAI** | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) | GPT-4o, o-series models |
-| **Anthropic** | [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) | Claude 3 / 3.5 series |
-| **Google** | [aistudio.google.com](https://aistudio.google.com) | Gemini models |
+| **OpenAI** | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) | GPT 5.6 Sol and other OpenAI models |
+| **Anthropic** | [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) | Claude Fable 5 and other Claude models |
+| **Google** | [aistudio.google.com](https://aistudio.google.com) | Gemini 3.5 Flash and other Gemini models |
 | **DeepSeek** | [platform.deepseek.com](https://platform.deepseek.com) | Fast and cost-effective |
 | **Groq** | [console.groq.com/keys](https://console.groq.com/keys) | Ultra-low latency inference |
 | **Mistral** | [console.mistral.ai](https://console.mistral.ai) | European LLM provider |
@@ -22,30 +22,30 @@ Aether uses your own API keys to call LLM providers directly from your device. T
 
 <Steps>
   <Step title="Open Providers settings">
-    Open Aether, then navigate to **Settings → Providers**.
+    Open Aether, then navigate to **Settings → Model Providers**.
   </Step>
   <Step title="Tap Add Provider">
-    Tap the **Add Provider** button at the top of the Providers screen.
+    Tap the **Add Provider** action at the top of the Providers screen.
   </Step>
   <Step title="Select your provider">
     Choose your provider from the list (for example, OpenAI or Anthropic).
   </Step>
-  <Step title="Paste your API key">
-    Paste your API key into the key field. Make sure there are no leading or trailing spaces.
+  <Step title="Configure credentials">
+    Choose API key, OAuth, or environment credentials when the selected provider supports them, then complete the required setup.
   </Step>
   <Step title="Save and verify">
-    Tap **Save**. Aether immediately validates connectivity to the provider using your key and confirms the setup was successful.
+    Fetch the provider's model catalog, enable the models you want, then tap **Save**.
   </Step>
 </Steps>
 
 ## Editing or Removing a Provider
 
 - **Edit**: Tap any provider row to open its detail screen and update the API key or other credentials.
-- **Remove**: Swipe left on the provider row or open the row menu and select **Remove**.
+- **Remove**: Tap the remove icon on the provider row.
 
 ## Switching the Active Model
 
-After you add a provider, tap the **model selector** in the chat composer (the pill-shaped button showing the current model name) to open a full list of models available across all your configured providers. Tap any model to switch to it for the current session or set it as your global default in Settings → Model.
+After you add a provider, tap the **model selector** in the top bar (the pill-shaped button showing the current model name) to open a full list of models available across all your configured providers. Tap any model to switch to it for the current session or set it as a default in **Settings → Model Providers → Default Models**.
 
 ---
 

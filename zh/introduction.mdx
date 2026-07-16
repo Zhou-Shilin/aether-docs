@@ -1,0 +1,46 @@
+---
+title: "Aether：Android AI Agent 详解"
+sidebarTitle: "简介"
+description: "Aether 将功能完整的本地 AI Agent 带到你的 Android 设备。了解它与其他 AI 聊天应用的区别。"
+---
+
+**Aether** 是基于 Pi 框架构建的 Android 通用 AI Agent。它将极简、精心打磨的界面与强大的智能体执行引擎相结合，开箱即用支持多种 LLM 提供商。无论你需要一个得力的 AI 聊天助手，还是一个能执行 shell 命令、控制手机的端侧自主 Agent，Aether 都能胜任。
+
+## Aether 不是什么
+
+Aether **不是** 云服务，也不是某一家 AI 提供商应用的套壳。你配置的所有 LLM API 密钥与凭证都保存在设备上的 Aether 私有应用目录中 — 不会经过任何中间服务器。你选择提供商，你拥有自己的数据。
+
+## 核心特性
+
+<CardGroup cols={2}>
+  <Card title="多提供商 LLM 支持" icon="brain" href="/zh/features/models-providers">
+    在同一个应用中连接 OpenAI、Anthropic、Google、DeepSeek、Groq、Mistral、Cloudflare 等。无需离开聊天界面即可切换提供商与模型。
+  </Card>
+  <Card title="内置 Alpine Linux 虚拟机" icon="terminal" href="/zh/features/alpine-runtime">
+    托管的 Alpine Linux 环境从 Aether 随包附带的资源初始化。Aether 通过该环境直接调用 shell 命令与 CLI 工具，为 Agent 提供真实算力。
+  </Card>
+  <Card title="Termux 与 Shizuku" icon="mobile" href="/zh/features/termux-shizuku">
+    可选集成 Termux 以获得 Android shell 访问，或使用 Shizuku 授权 Agent 模式的隔离虚拟显示 — 无需 root。
+  </Card>
+  <Card title="扩展系统" icon="puzzle-piece" href="/zh/extensions/overview">
+    使用热重载 TypeScript mods 快速迭代，或使用编译型 Kotlin/DEX native mods 获得完整平台能力。单个扩展包可同时增强 Pi Agent，并向应用注入原生 Compose 或 WebView UI。
+  </Card>
+</CardGroup>
+
+## Pi 框架
+
+Aether 构建于 **Pi agent 框架** 之上，将其作为核心执行引擎。Pi 提供：
+
+- **广泛的 LLM 提供商兼容性** — 统一接口覆盖所有支持的提供商，切换模型无需改代码。
+- **轻量级 Agent 执行** — 高效管理工具调用、上下文窗口与多步推理循环，开销可控。
+- **可扩展钩子** — Aether 向开发者暴露的扩展点，直接内建于 Pi 架构中。
+
+由于提供商通信与 Agent 编排委托给 Pi，Aether 保持精简的同时依然高度可用。
+
+## 面向扩展开发者
+
+Aether 的扩展系统允许你以自包含包的形式交付新工具、UI 元素与 Agent 行为。扩展可写成热重载 TypeScript mods 以便快速原型，也可写成编译型 Kotlin/DEX native mods，以便完整访问 Android API 并获得原生性能。
+
+<Card title="扩展开发者指南" icon="code" href="/zh/extensions/overview">
+  了解如何构建、打包与分发你自己的 Aether 扩展。
+</Card>

@@ -17,7 +17,7 @@ aether.registerPage(definition: PageDefinition): () => void;
 ## PageDefinition fields
 
 <ParamField path="id" type="string" required>
-  Unique page identifier. Aether uses this to scope the page within your extension and to target the page from `ui.pageButton(pageId)` navigation calls. Must be a non-empty string.
+  Unique page identifier. Aether uses this to scope the page within your extension and to target the page from `ui.node("pageButton", { page: pageId })` navigation calls. Must be a non-empty string.
 </ParamField>
 
 <ParamField path="title" type="string" required>
@@ -32,12 +32,16 @@ aether.registerPage(definition: PageDefinition): () => void;
   Icon name displayed next to the title in the drawer. Defaults to `"extension"` when omitted.
 </ParamField>
 
-<ParamField path="render" type="function" required>
-  A factory function that returns the page's `ui` node tree. The function may be synchronous or `async` and receives the standard render context.
+<ParamField path="render" type="function">
+  A factory function that returns the page's `ui` node tree. The function may be synchronous or `async` and receives the standard render context. Use either `render` or `tree`.
 
   ```typescript
   render: (context: RenderContext) => ui node | Promise<ui node>
   ```
+</ParamField>
+
+<ParamField path="tree" type="object">
+  A static `ui` node tree used when `render` is omitted.
 </ParamField>
 
 ## Example
@@ -57,12 +61,16 @@ aether.registerPage({
 
 ## Navigating to a page
 
-Use `ui.pageButton(pageId)` in any surface, component, or other page to render a navigation button that opens the target page:
+Use `ui.node("pageButton", { page, label, icon })` in any surface, component, or other page to render a navigation button that opens the target page:
 
 ```typescript
 aether.registerSurface("chat.composer.top", {
   id: "open-dashboard",
-  render: () => ui.pageButton("dashboard"),
+  render: () => ui.node("pageButton", {
+    page: "dashboard",
+    label: "Open dashboard",
+    icon: "code",
+  }),
 });
 ```
 

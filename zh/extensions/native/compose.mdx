@@ -1,0 +1,139 @@
+---
+title: "Native Compose 组件：用 Kotlin 替换 Aether UI"
+sidebarTitle: "Compose"
+description: "从 Kotlin Native Mod 注册原生 Jetpack Compose 组件渲染器，以替换或包裹 Aether 任意内置 UI 目标。"
+---
+
+Native Compose 组件在替换或包裹 Aether 内置 UI 时提供完整的 Jetpack Compose 访问。它们围绕 Script 组件管线工作 — Native `Replace` 对 Script 级替换具有决定性，Native `Wrap` 组件则位于所有 Script 组件包装器的外侧。
+
+## API
+
+在 `onLoad` 中调用 `context.registerComponent()`：
+
+```kotlin
+context.registerComponent(
+    target: String,
+    id: String,
+    mode: AetherNativeComponentMode,
+    priority: Int,
+    renderer: AetherNativeComponentRenderer
+)
+```
+
+| Parameter | Description |
+|---|---|
+| `target` | 要修改的内置组件目标（见下方目标表）。 |
+| `id` | 此注册的稳定字符串标识。 |
+| `mode` | 此渲染器与目标的交互方式（见下方模式表）。 |
+| `priority` | 在同一模式内，更高优先级的注册最后求值 — 最后一个 `Replace` 或 `Hide` 生效。 |
+| `renderer` | `AetherNativeComponentRenderer` 实现。`Hide` 模式下可为 `null`。 |
+
+## AetherNativeComponentMode 取值
+
+| Mode | Behaviour |
+|---|---|
+| `Before` | 紧邻目标内容之前渲染。 |
+| `After` | 紧邻目标内容之后渲染。 |
+| `Replace` | 替换目标内容。最后一个 `Replace` 注册（按优先级，再按注册顺序）具有决定性。 |
+| `Wrap` | 包围已解析的中心内容。多个 `Wrap` 注册向外层层组合。 |
+| `Hide` | 完全抑制目标。最后一个 `Hide` 注册生效。 |
+
+## 内置组件目标
+
+| Target | Built-in UI |
+|---|---|
+| `app.content` | 整个已路由的 Aether 应用内容。 |
+| `chat.screen` | 完整聊天界面。 |
+| `settings.screen` | 完整设置界面。 |
+| `chat.composer.actionTray` | 已选 Skill / MCP / Agent Mode 托盘。 |
+| `chat.composer.skillPicker` | 输入区加号菜单中的 Skill 行。 |
+
+## AetherNativeComponentRenderer 接口
+
+```kotlin
+interface AetherNativeComponentRenderer {
+    @Composable
+    fun render(
+        context: AetherNativeComponentContext,
+        next: @Composable () -> Unit,
+    )
+}
+```
+
+`context` 参数提供：
+
+| Property | Type | Description |
+|---|---|---|
+| `target` | `String` | 此渲染器所注册的目标字符串。 |
+| `uiState` | `AetherUiState` | Aether 完整内部 UI 状态。 |
+| `publicState` | `JSONObject` | 公共应用状态的 JSON 快照。 |
+| `host` | `AetherNativeHost` | 用于调用宿主方法的异步桥接。 |
+
+`next` 参数是 `@Composable () -> Unit`，表示下游内容 — 可能是内置 Compose 实现、Script 组件替换，或下一个 Native 组件。在 `Wrap` 模式渲染器中调用 `next()` 以渲染被包裹的内容。
+
+## 示例 — Replace 模式
+
+用自定义 Compose 内容替换 action 托盘：
+
+```kotlin MyNativeMod.kt
+context.registerComponent(
+    target = "chat.composer.actionTray",
+    id = "native-tray",
+    mode = AetherNativeComponentMode.Replace,
+    priority = 500,
+    renderer = object : AetherNativeComponentRenderer {
+        @Composable
+        override fun render(
+            context: AetherNativeComponentContext,
+            next: @Composable () -> Unit,
+        ) {
+            Text("Rendered from a Native Mod", Modifier.padding(16.dp))
+        }
+    },
+)
+```
+
+## 示例 — Wrap 模式
+
+用额外内容包围现有 action 托盘：
+
+```kotlin
+context.registerComponent(
+    target = "chat.composer.actionTray",
+    id = "native-tray-wrapper",
+    mode = AetherNativeComponentMode.Wrap,
+    priority = 500,
+    renderer = object : AetherNativeComponentRenderer {
+        @Composable
+        override fun render(
+            context: AetherNativeComponentContext,
+            next: @Composable () -> Unit,
+        ) {
+            Column {
+                Text("Above original")
+                next() // renders the wrapped content
+                Text("Below original")
+            }
+        }
+    },
+)
+```
+
+## 示例 — Hide 模式
+
+完全抑制 skill 选择器（无需渲染器）：
+
+```kotlin
+context.registerComponent(
+    target = "chat.composer.skillPicker",
+    id = "hide-skill-picker",
+    mode = AetherNativeComponentMode.Hide,
+    priority = 500,
+)
+```
+
+<Note>
+  Compose 渲染器必须使用与目标 Aether 构建匹配的 Compose 编译器版本编译。版本
+  不匹配可能导致类加载时崩溃。恢复选项见{" "}
+  <a href="/zh/extensions/native/safe-mode">安全模式</a> 页面。
+</Note>

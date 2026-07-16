@@ -29,25 +29,29 @@ aether.registerSurface(slot: string, definition: SurfaceDefinition): () => void;
 
 ## SurfaceDefinition fields
 
-<ParamField path="id" type="string" required>
-  Unique identifier for this surface registration. Aether uses this to track and de-duplicate registrations from the same extension.
+<ParamField path="id" type="string">
+  Unique identifier for this surface registration. Aether uses this to track and de-duplicate registrations from the same extension. If omitted, Aether generates one from the slot and registration order.
 </ParamField>
 
 <ParamField path="order" type="number">
   Controls the rendering order when multiple extensions register the same slot. Lower values render first. Defaults to `0` when omitted.
 </ParamField>
 
-<ParamField path="render" type="function" required>
-  A factory function that receives a render context and returns a `ui` node tree. The function may be synchronous or `async`.
+<ParamField path="render" type="function">
+  A factory function that receives a render context and returns a `ui` node tree. The function may be synchronous or `async`. Use either `render` or `tree`.
 
   ```typescript
   render: (context: RenderContext) => ui node | Promise<ui node>
   ```
 </ParamField>
 
+<ParamField path="tree" type="object">
+  A static `ui` node tree used when `render` is omitted.
+</ParamField>
+
 ## Render context
 
-Aether passes the following fields to your `render` function on every render cycle:
+Aether passes fields including the following to your `render` function on every render cycle:
 
 | Field | Type | Description |
 |---|---|---|

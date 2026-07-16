@@ -23,11 +23,11 @@ Every Native Mod entry class implements this interface:
 ```kotlin
 interface AetherNativeMod {
     fun onLoad(context: AetherNativeModContext)
-    fun onUnload()
+    fun onUnload() = Unit
 }
 ```
 
-`onLoad` is called once when the mod is loaded at process startup. `onUnload` is called when the mod is programmatically removed (currently reserved for future unload support).
+`onLoad` is called once when the mod is loaded at process startup. The interface defines `onUnload`, but the current Native Mod manager does not invoke it.
 
 ## AetherNativeModContext
 
@@ -81,11 +81,10 @@ Declare your DEX artifact, optional native library directories, and entry class 
 ```kotlin MyNativeMod.kt
 class MyNativeMod : AetherNativeMod {
     override fun onLoad(context: AetherNativeModContext) {
-        context.diagnosticLogger.info("MyNativeMod loaded for: ${context.modId}")
-    }
-
-    override fun onUnload() {
-        // clean up
+        context.log(
+            event = "loaded",
+            details = mapOf("mod_id" to context.modId),
+        )
     }
 }
 ```

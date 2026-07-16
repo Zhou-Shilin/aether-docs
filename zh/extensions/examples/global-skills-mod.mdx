@@ -1,0 +1,281 @@
+---
+title: "Global Skills Mod：跨对话管理默认 Skill"
+sidebarTitle: "Global Skills Mod"
+description: "global-skills-mod 示例展示如何替换 Aether 的输入托盘、管理全局 Skill 默认值，并构建自定义 Skills 管理页面。"
+---
+
+`examples/global-skills-mod` 包是跨对话的全局、持久 Skill 选择的参考实现。它源于 Aether issue #27，演示如何在单个 Script Mod 中组合 UI 替换与原生服务调用 — 无需 Native Mod。
+
+## 此 mod 做什么
+
+- 用自定义托盘替换 `chat.composer.actionTray`，显示当前全局 Skill 选择与展开/折叠切换
+- 隐藏 `chat.composer.skillPicker`（内置的按对话 Skill 行），保持 UI 简洁
+- 从 Aether 原生 `skills` 服务读取完整 Skill 目录
+- 通过 `skills.setSelected` 写回单个 Skill 开关，通过 `skills.setSelection` 写回批量选择
+- 在扩展存储中持久化展开/折叠状态
+- 在会话抽屉中添加「Global Skills」全屏页面，用于专门管理
+
+## 包声明
+
+`package.json` 在 `aether.extensions` 下注册单个入口。没有 `pi` 键，因为此 mod 没有 Pi Agent 组件：
+
+```json
+{
+  "name": "aether-global-skills-mod",
+  "version": "1.0.0",
+  "description": "Minecraft-style replacement of Aether's native skill tray with persistent global defaults.",
+  "aether": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}
+```
+
+## 完整带注释代码导读
+
+### 1. 导入
+
+```ts
+import {
+  defineAetherExtension,
+  ui,
+} from "@aether/extension-api";
+
+type Skill = {
+  id: string;
+  name: string;
+  description?: string;
+  enabled?: boolean;
+  selected?: boolean;
+  default_selected?: boolean;
+};
+```
+
+因为这是仅脚本的 Aether Mod（无 Pi 集成），不从 `@earendil-works/pi-coding-agent` 导入。本地 `Skill` 类型镜像原生 `skills` 服务 `list` 方法返回的结构，在各 `render` 回调中用于类型安全解构。
+
+---
+
+### 2. 组件注册：替换操作托盘并隐藏 skill picker
+
+```ts
+aether.registerComponent("chat.composer.actionTray", {
+  id: "global-skill-tray",
+  mode: "replace",
+  order: 100,
+  render: (context) => { /* ... see section 4 */ },
+});
+
+aether.registerComponent("chat.composer.skillPicker", {
+  id: "hide-native-skill-picker",
+  mode: "hide",
+  order: 100,
+});
+```
+
+`registerComponent` 以命名的内置 Compose UI 为目标。这里两个注册协同工作：
+
+- **在 `chat.composer.actionTray` 上使用 `mode: "replace"`** — 完全替换默认的已选 Skill/MCP/Agent 模式托盘。`order: 100` 确保此注册优先于其他扩展的更低优先级替换。
+- **在 `chat.composer.skillPicker` 上使用 `mode: "hide"`** — 抑制出现在输入框加号菜单中的内置按对话 Skill 行。因为 mod 通过托盘接管全局 Skill 选择，原生按对话选择器会显得冗余且易混淆。`hide` 注册不需要 `render` — 目标会直接消失。
+
+---
+
+### 3. 页面注册：Global Skills 管理页
+
+```ts
+aether.registerPage({
+  id: "global-skills",
+  title: "Global Skills",
+  subtitle: "Persistent defaults powered by Mod Kernel v2",
+  icon: "extension",
+  render: (context) => {
+    const skills = (context.skills ?? []) as Skill[];
+    const defaultIds = new Set(
+      Array.isArray(context.default_skill_ids)
+        ? context.default_skill_ids.map(String)
+        : [],
+    );
+    return ui.column([
+      ui.text("Global skill defaults", {
+        style: "headline",
+        weight: "bold",
+      }),
+      ui.text(
+        "These selections are written into Aether's native Skill state and applied to new chats.",
+        { color: "muted" },
+      ),
+      ...skills
+        .filter((skill) => skill.enabled !== false)
+        .map((skill) =>
+          ui.switch(
+            skill.name,
+            defaultIds.has(skill.id),
+            "set-skill",
+            {
+              subtitle: skill.description ?? "",
+              args: { skill_id: skill.id },
+            },
+          )
+        ),
+    ], {
+      scroll: true,
+      spacing: 10,
+    });
+  },
+});
+```
+
+`registerPage` 在会话抽屉中添加全屏目标页。要点：
+
+- **`context.skills`** — 来自实时应用状态；Aether 会自动将 Skill 目录与其余 UI 状态一并提供。
+- **`context.default_skill_ids`** — 反映原生 `skills` 服务的当前默认选择。页面据此派生 `defaultIds` 来驱动开关状态，无需在扩展存储中维护副本。
+- **`ui.switch(label, checked, actionId, options)`** — 渲染带标签的切换行。每个开关会触发 `set-skill` 操作，并以 `{ skill_id: skill.id }` 作为 `args`，将具体 Skill ID 传给操作处理程序。
+- **`skill.enabled !== false`** — 过滤掉平台已禁用的 Skill；它们不应出现在管理 UI 中。
+- **`scroll: true`** — 使列在 Skill 目录较大时可滚动。
+
+---
+
+### 4. 表面：在托盘中显示当前全局 Skill 选择
+
+`chat.composer.actionTray` 替换的 `render` 回调读取实时上下文并构建托盘 UI：
+
+```ts
+render: (context) => {
+  const skills = (context.skills ?? []) as Skill[];
+  const selectedIds = new Set(
+    Array.isArray(context.selected_skill_ids)
+      ? context.selected_skill_ids.map(String)
+      : [],
+  );
+  const expanded = Boolean(context.storage.expanded);
+  const selectedSkills = skills.filter((skill) => selectedIds.has(skill.id));
+
+  return ui.card([
+    ui.row([
+      ui.column([
+        ui.text("Global Skills", { style: "label", weight: "semibold" }),
+        ui.text(
+          selectedSkills.length === 0
+            ? "No defaults"
+            : `${selectedSkills.length} enabled for every new chat`,
+          { style: "small", color: "muted" },
+        ),
+      ], { weight: 1 }),
+      ui.button(expanded ? "Collapse" : "Manage", "toggle-expanded", {
+        args: { expanded: !expanded },
+        tone: "neutral",
+      }),
+    ], {
+      arrangement: "space-between",
+      verticalAlignment: "center",
+    }),
+    ...(expanded
+      ? [ /* expanded skill list — see below */ ]
+      : selectedSkills.length > 0
+        ? [
+            ui.text(
+              selectedSkills.map((skill) => skill.name).join(" · "),
+              { style: "small", color: "muted", maxLines: 2 },
+            ),
+          ]
+        : []),
+  ], { radius: 20 });
+},
+```
+
+- **`context.selected_skill_ids`** — 反映当前打开对话的活动 Skill 选择，来自原生状态。托盘据此派生 `selectedSkills` 以显示数量与名称，无需复制状态。
+- **`context.storage.expanded`** — 折叠/展开切换状态是扩展存储中唯一保存的内容；其余都从原生应用状态读取。
+- **折叠状态** — 当 `expanded` 为 `false` 且至少选中一个 Skill 时，托盘以 ` · ` 连接 Skill 名称作为 muted 说明。未选中任何内容时显示 "No defaults"。
+
+当 `expanded` 为 `true` 时，托盘渲染可滚动的 Skill 开关列表与清除按钮：
+
+```ts
+ui.column([
+  ...skills
+    .filter((skill) => skill.enabled !== false)
+    .map((skill) =>
+      ui.switch(
+        skill.name,
+        selectedIds.has(skill.id),
+        "set-skill",
+        {
+          subtitle: skill.description ?? "",
+          args: { skill_id: skill.id },
+        },
+      )
+    ),
+  ui.button("Clear global selection", "clear", {
+    tone: "neutral",
+    width: "fill",
+  }),
+], { spacing: 8 }),
+```
+
+---
+
+### 5. 从 `skills` 服务读取 Skills
+
+```ts
+const skills = (context.skills ?? []) as Skill[];
+const selectedIds = new Set(
+  Array.isArray(context.selected_skill_ids)
+    ? context.selected_skill_ids.map(String)
+    : [],
+);
+```
+
+Aether 将 Skill 目录与当前选择直接注入 `render` 上下文的 `context.skills` 与 `context.selected_skill_ids`。你无需在 `render` 内手动调用 `aether.services.invoke("skills", "list")` — 平台会保持这些字段最新，并在变更时重新渲染表面。
+
+当你需要命令式读取 Skills（在 `render` 外，例如在操作处理程序中）时，使用：
+
+```ts
+const result = await aether.services.invoke("skills", "list");
+```
+
+---
+
+### 6. 通过 `skills.setSelected` 与 `skills.setSelection` 写回选择
+
+```ts
+aether.registerAction("set-skill", async ({ skill_id, checked }) => {
+  await aether.services.invoke("skills", "setSelected", {
+    skill_id,
+    selected: Boolean(checked),
+    scope: "both",
+  });
+});
+
+aether.registerAction("clear", async () => {
+  await aether.services.invoke("skills", "setSelection", {
+    ids: [],
+    scope: "both",
+  });
+});
+```
+
+- **`setSelected`** 切换单个 Skill。`scope: "both"` 同时更新当前对话的选择与默认选择。原生服务将变更传播回应用状态，从而触发所有读取 `selected_skill_ids` 的表面重新渲染。
+- **`setSelection`** 用显式 ID 列表替换整个选择。`clear` 操作传入空数组，以在两个作用域中取消全选。
+
+---
+
+### 7. 在 `storage` 中持久化展开/折叠偏好
+
+展开/折叠偏好是写入 `storage` 的唯一值：
+
+```ts
+aether.registerAction("toggle-expanded", ({ expanded }) => {
+  aether.storage.set("expanded", Boolean(expanded));
+});
+```
+
+因为 Skill 选择通过 `setSelected` / `setSelection` 直接写入原生状态，无需在扩展存储中镜像它们。Aether 原生 `skills` 服务会自行持久化默认选择。托盘在每次渲染时读取 `context.storage.expanded`，以在会话间恢复正确的折叠或展开状态。
+
+## 展示的关键模式
+
+- **组合 `registerComponent`（replace + hide）与 `registerPage`** — 你可以完全抑制内置 UI 元素，同时替换为自己的实现并添加专用管理页，全部在一次 `activateAether` 工厂调用中完成。
+- **使用 `aether.services.invoke("skills", ...)` 操作真实原生状态** — 不在扩展存储中维护 Skill 数据的影子副本，而是对实际原生 `skills` 服务读写。这样选择始终与 Aether 其余部分所见保持一致。
+- **Storage 写入会触发表面重渲染** — `storage.set()`、`storage.delete()` 与 `storage.clear()` 会自动使扩展 UI 失效。在此 mod 中，`toggle-expanded` 更新 `storage.expanded`，框架会重渲染托盘，无需显式调用 `aether.invalidate()`。
+
+<Note>
+此 mod 仅为 Script Mod（`aether.extensions`）— 无需 Native Mod 即可实现完整 Skill 管理，展示了 Script API 的能力。所有持久状态位于 Aether 原生 `skills` 服务中；扩展存储仅用于托盘的展开/折叠偏好。若需要在更低层级拦截 Skill 选择（例如锁定某个 Skill 禁止取消选择），可将此模式与 `aether.intercept("skills.selection", ...)` 组合使用。
+</Note>

@@ -29,11 +29,11 @@ Find answers to the most common questions about setting up and using Aether. If 
   </Accordion>
 
   <Accordion title="Does Aether require root?">
-    No. Root access is **never required**. For privileged device operations, Aether optionally integrates with **Shizuku**, which uses Android's ADB (Wireless Debugging) interface to grant elevated permissions without rooting your device. Shizuku itself is entirely optional.
+    No. Root access is **not required**. Agent Mode can use **Shizuku**, which uses Android's ADB (Wireless Debugging) interface to grant elevated permissions without rooting your device. Experimental Root authorization is also available as an alternative.
   </Accordion>
 
   <Accordion title="Can I use Aether without Termux or Shizuku?">
-    Yes. Both Termux and Shizuku are **optional integrations**. The built-in Alpine Linux runtime handles the vast majority of shell-tool use cases — file manipulation, scripting, package installs — without any additional apps. Install Termux or Shizuku only if you need deeper device automation capabilities.
+    Yes. The built-in Alpine Linux runtime handles shell-tool use cases — file manipulation, scripting, package installs — without either app. Termux is required for Termux commands and by the current Agent Mode setup; Shizuku is one of the two Agent Mode authorization methods.
   </Accordion>
 
   <Accordion title="What is an Extension / Mod?">

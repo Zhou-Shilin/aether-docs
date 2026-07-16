@@ -62,17 +62,17 @@ This guide walks you through creating a minimal extension that adds a button abo
     zip -r my-first-extension.zip .
     ```
 
-    The zip must contain `package.json` and your entry file at the root level (not inside a subdirectory).
+    The zip may contain the package at the archive root or inside exactly one top-level package directory.
   </Step>
 
   <Step title="Install in Aether">
-    Open Aether → **Settings** → **Extensions** → **Import**. Select `my-first-extension.zip`. Aether extracts the package into `~/.aether/extensions` and hot-loads the extension immediately — no restart required.
+    Open the conversation drawer, then go to **Settings** → **Extensions** → **Import extension**. Select `my-first-extension.zip`. Aether extracts the package into `~/.aether/extensions` and hot-loads the extension immediately — no restart required.
   </Step>
 
   <Step title="Test the extension">
     Navigate to the chat screen. You should see the **Insert summary prompt** button rendered above the composer input. Tap it — Aether calls your `insert-prompt` action handler, which patches `draft_input` with the preset text. The composer field fills instantly.
 
-    If the button does not appear, open Settings → Extensions and confirm your extension is listed and enabled. Check the error log on that screen for any load-time issues.
+    If the button does not appear, open **Settings → Extensions** and confirm your extension is listed and enabled. Check the error log on that screen for any load-time issues.
   </Step>
 </Steps>
 

@@ -4,7 +4,7 @@ sidebarTitle: "Alpine Runtime"
 description: "Aether includes a managed Alpine Linux VM powered by proot. Run shell commands, install packages, and execute scripts directly from the agent."
 ---
 
-Aether ships with a bundled Alpine Linux arm64 rootfs that runs inside [proot](https://proot-me.github.io/), giving the AI agent a complete Linux command environment without requiring root access on your Android device. This is the execution backbone behind Agent Mode's shell capabilities.
+Aether ships with a bundled Alpine Linux arm64 rootfs that runs inside [proot](https://proot-me.github.io/), giving the AI agent a complete Linux command environment without requiring root access on your Android device. This runtime is independent of Agent Mode.
 
 ## How It Works
 
@@ -24,7 +24,7 @@ The proot environment is fully self-contained. Anything you install or modify st
 
 ## First-Time Setup
 
-On the **first message you send with Agent Mode enabled**, Aether silently extracts and initializes the Alpine environment in the background. You will see a brief setup indicator during this process. Initialization typically takes **30–60 seconds** depending on your device — subsequent sessions start instantly from the already-extracted rootfs.
+Initialize Alpine during onboarding or from **Settings → Alpine**. Aether extracts the bundled runtime assets into its private app storage; it does not download the rootfs, and setup is not tied to Agent Mode.
 
 ## What's Included
 
@@ -38,18 +38,18 @@ Packages install into the Alpine rootfs and persist across Aether sessions.
 
 ## Using Shell Tools
 
-When the agent executes shell commands in Agent Mode, they run **inside the Alpine environment**. Keep this in mind when interpreting file paths:
+When a shell command selects Alpine, it runs **inside the Alpine environment**. Keep this in mind when interpreting file paths:
 
 | Path inside Alpine | What it refers to |
 |---|---|
-| `/home` | Alpine's home directory (inside the rootfs) |
+| `/root` | Alpine's home directory (inside the rootfs) |
+| `/workspace` | Aether's managed Alpine workspace |
 | `/tmp` | Alpine's temp directory |
-| `/sdcard` | Your Android shared storage (if exposed by proot) |
 | `/` | Root of the Alpine rootfs, not your Android `/` |
 
 ## Accessing Android Storage
 
-The agent can reach your Android shared storage via the `/sdcard` path inside Alpine, provided proot exposes the mount. This lets the agent read files from your Downloads folder, process media, or write results back to a location accessible from other Android apps.
+Aether does not bind Android shared storage into Alpine as `/sdcard`. Files exposed to Aether's workspace tools are managed through `/workspace`.
 
 ## Persisting Data
 

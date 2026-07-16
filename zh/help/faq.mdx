@@ -1,0 +1,51 @@
+---
+title: "Aether 常见问题"
+sidebarTitle: "常见问题"
+description: "关于 Aether 兼容性、隐私、LLM 提供商、Alpine Linux 运行时与扩展系统的常见问题解答。"
+---
+
+查找关于设置与使用 Aether 的最常见问题。若此处未覆盖你的问题，请查看 [故障排除](/zh/help/troubleshooting) 页面，或在 GitHub 上提交 issue。
+
+<AccordionGroup>
+
+  <Accordion title="Aether 需要什么 Android 版本？">
+    Aether 需要 **Android 8.0 Oreo（API 26）或更高版本**，且仅运行在 **arm64-v8a**（64 位 ARM）设备上。无法安装在 x86 平板、模拟器或 32 位 ARM 设备上。
+  </Accordion>
+
+  <Accordion title="Aether 收费吗？">
+    Aether 本身在 GPL-3.0 许可下 **免费且开源**。你只需支付所选提供商（OpenAI、Anthropic 等）直接收取的 LLM API 费用。Aether 不收取任何额外费用或加价。
+  </Accordion>
+
+  <Accordion title="我的 API 密钥安全吗？">
+    是的。API 密钥保存在设备上 **Aether 的私有应用存储** 中，仅在你发起请求时发送到对应提供商的 API 端点。Aether 没有自有服务器，也绝不会接收或记录你的密钥。
+  </Accordion>
+
+  <Accordion title="可以离线使用 Aether 吗？">
+    AI 聊天功能需要网络连接以访问 LLM 提供商 API — 模型本身在云端运行。不过，**Alpine Linux 运行时与 shell 工具** 在环境初始化后可完全离线工作，因此你可以在没有网络时运行本地脚本与命令。
+  </Accordion>
+
+  <Accordion title="什么是 Alpine Linux 虚拟机？">
+    Aether 附带通过 `proot` 运行的 **Alpine Linux arm64 根文件系统** — proot 是一种在用户态模拟 Linux 环境、无需 root 的工具。这为 AI Agent 提供了真正的 Linux shell，可执行命令、用 `apk` 安装软件包，并使用标准 UNIX 工具完成任务。
+  </Accordion>
+
+  <Accordion title="Aether 需要 root 吗？">
+    不需要。**不需要** root。Agent 模式可使用 **Shizuku**，它通过 Android 的 ADB（无线调试）接口授予提升权限，而无需 root 设备。实验性 Root 授权也可作为替代方案使用。
+  </Accordion>
+
+  <Accordion title="可以在没有 Termux 或 Shizuku 的情况下使用 Aether 吗？">
+    可以。内置 Alpine Linux 运行时可覆盖 shell 工具场景 — 文件操作、脚本、软件包安装 — 无需这两个应用。Termux 命令以及当前 Agent 模式设置需要 Termux；Shizuku 是两种 Agent 模式授权方式之一。
+  </Accordion>
+
+  <Accordion title="什么是扩展 / Mod？">
+    扩展是向 Aether 添加新工具、UI 表面或应用行为的包。它们可以是 **TypeScript 脚本**（由 Pi 框架在运行时解释），也可以是 **编译型 Kotlin/DEX native mods**（作为 Compose 或 WebView UI 层直接注入应用）。单个扩展包可同时扩展 Pi Agent 并向 Aether 注入原生 UI。构建自己的扩展请参阅扩展开发文档。
+  </Accordion>
+
+  <Accordion title="聊天记录存储在哪里？">
+    聊天记录保存在设备上 Aether 私有应用存储内的 **本地数据库** 中。绝不会同步到任何服务器、云服务或 Aether 基础设施。你的对话留在设备上。
+  </Accordion>
+
+  <Accordion title="如何更新 Aether？">
+    从 [GitHub Releases 页面](https://github.com/Zhou-Shilin/Aether/releases) 下载最新 APK（或从 Nightly Link 获取 nightly 构建），并覆盖安装现有版本。Android 会执行就地升级，保留全部数据、设置与聊天记录。
+  </Accordion>
+
+</AccordionGroup>

@@ -1,0 +1,299 @@
+---
+title: "Aether 扩展界面的声明式 UI 节点"
+sidebarTitle: "声明式 UI"
+description: "使用 Aether 原生声明式节点系统构建扩展 UI — 文本、行、列、卡片、按钮、输入框、开关等。"
+---
+
+Aether 的 `ui` 工厂提供一组声明式节点类型，会在 surface、component 与 page 中渲染为原生 Android Compose 视图。每次工厂调用返回普通的节点描述对象；Aether 的 Android 渲染器在展示时将这些描述解析为 Compose 组件。
+
+## 导入
+
+```typescript
+import { ui } from "@aether/extension-api";
+```
+
+你也可以直接从传入扩展工厂的 `aether` 参数上访问 `ui`：
+
+```typescript
+export const activateAether = defineAetherExtension((aether) => {
+  const { ui } = aether; // equivalent to the named import
+});
+```
+
+---
+
+## 节点类型参考
+
+### 布局
+
+#### `ui.column(children, opts?)`
+
+将子节点纵向堆叠。
+
+```typescript
+ui.column([
+  ui.text("Line 1"),
+  ui.text("Line 2"),
+])
+```
+
+---
+
+#### `ui.row(children, opts?)`
+
+将子节点横向排列。默认情况下，行会填满可用宽度，并使所有子节点保持在同一行。
+
+| Option | Type | Description |
+|---|---|---|
+| `wrap` | `boolean` | 允许子节点换行到多行。在较窄的 Android 布局中很有用。 |
+| `rowSpacing` | `number` | 换行后各行之间的间距。 |
+| `maxItemsInEachRow` | `number` | 启用换行时，限制每行的最大项数。 |
+
+直接子节点可设置 `weight`，以占用剩余水平空间，同时让兄弟控件保持固有尺寸。
+
+```typescript
+ui.row([
+  ui.text("Label"),
+  ui.button("Action", "my-action", { weight: 1 }),
+])
+```
+
+---
+
+#### `ui.box(children, opts?)`
+
+叠加/层叠容器，将子节点彼此叠放绘制。
+
+```typescript
+ui.box([
+  ui.text("Background layer"),
+  ui.text("Foreground layer"),
+])
+```
+
+---
+
+#### `ui.node("scroll", { children, ...opts })`
+
+将子节点包裹在可滚动容器中。
+
+```typescript
+ui.node("scroll", {
+  children: [
+    ui.text("Item 1"),
+    ui.text("Item 2"),
+    // ... many more items
+  ],
+})
+```
+
+---
+
+#### `ui.spacer(size?, opts?)`
+
+插入固定空白。`size` 参数同时设置其宽度与高度（dp，默认：`8`）。
+
+```typescript
+ui.row([
+  ui.text("Left"),
+  ui.spacer(16),
+  ui.text("Right"),
+])
+```
+
+---
+
+### 文本
+
+#### `ui.text(content, opts?)`
+
+渲染文本字符串。使用 `opts.style` 应用排版角色：
+
+| Style | Description |
+|---|---|
+| `"headline"` | 大号展示标题 |
+| `"title"` | 区块或卡片标题 |
+| `"body"` | 默认正文 |
+| `"caption"` | 小号补充说明 |
+| `"display"` | 展示型文本 |
+
+```typescript
+ui.text("Hello Aether", { style: "headline" })
+```
+
+---
+
+#### `ui.code(content, opts?)`
+
+以等宽文本形式渲染内容。
+
+```typescript
+ui.code("const x = 42;")
+```
+
+---
+
+### 交互
+
+#### `ui.button(label, actionId, opts?)`
+
+可点击按钮，按下时触发已注册的 action。
+
+| Option | Type | Description |
+|---|---|---|
+| `args` | `object` | 转发给 action 处理器的参数。 |
+| `weight` | `number` | 在 row 内占用剩余水平空间。 |
+| `width` | `string \| number` | 宽度覆盖，例如以 dp 表示的数字或 `"fill"`。 |
+
+```typescript
+ui.button("Run", "run-action", { args: { verbose: true } })
+```
+
+按钮标签始终单行显示。提供 `weight` 或显式 `width` 可控制按钮占用的水平空间。
+
+---
+
+#### `ui.iconButton(icon, actionId, opts?)`
+
+仅图标按钮。在不需要文本标签、需要节省水平空间时使用。
+
+```typescript
+ui.iconButton("refresh", "reload-data")
+```
+
+---
+
+#### `ui.switch(label, checked, actionId, opts?)`
+
+带标签的开关。将当前布尔状态作为 `checked` 传入。
+
+```typescript
+ui.switch("Enable feature", storage.featureEnabled ?? false, "toggle-feature")
+```
+
+<Note>
+`switch` 工厂签名为 `ui.switch(label, checked, actionId, opts?)`。与 `button` 不同，当前状态是位置参数而非选项，因此 action 处理器始终能收到最新值。
+</Note>
+
+---
+
+#### `ui.input(value, actionId, opts?)`
+
+文本输入框。将当前字符串值作为第一个参数传入。
+
+| Option | Type | Description |
+|---|---|---|
+| `singleLine` | `boolean` | 将输入保持为单行。默认为 `true`。 |
+
+```typescript
+ui.input(storage.query ?? "", "update-query", { singleLine: true })
+```
+
+---
+
+### 卡片与导航
+
+#### `ui.card(children, opts?)`
+
+卡片容器，用于组织相关内容。
+
+```typescript
+ui.card([
+  ui.text("Card title", { style: "title" }),
+  ui.text("Card body"),
+])
+```
+
+---
+
+#### `ui.node("pageButton", opts)`
+
+导航按钮，点击时打开指定 `id` 的已注册页面。使用 `ui.node("pageButton", { page, label?, icon?, width? })` — 没有独立的 `ui.pageButton` 工厂函数。
+
+| Option | Type | Description |
+|---|---|---|
+| `page` | `string` | 通过 `registerPage` 注册的页面 `id`。 |
+| `label` | `string` | 按钮标签文本。 |
+| `icon` | `string` | 可选图标名称。 |
+| `width` | `string \| number` | 宽度覆盖，例如 `"fill"` 可让按钮扩展。 |
+
+```typescript
+ui.node("pageButton", {
+  page: "dashboard",
+  label: "Dashboard",
+  icon: "code",
+  width: "fill",
+})
+```
+
+---
+
+### 进度与组合
+
+#### `ui.progress(value?, opts?)`
+
+渲染圆形进度指示器。省略 `value` 为不确定（旋转）状态；传入 `0` 到 `1` 之间的 `number` 为确定圆形进度。
+
+```typescript
+ui.progress()          // indeterminate
+ui.progress(0.65)      // 65 % complete
+```
+
+---
+
+#### `ui.core()`
+
+占位符，标记在 `wrap` 模式组件注册中应渲染被包裹的原生或替换内容的位置。在 `mode: "wrap"` 的 `registerComponent` 调用中使用。
+
+```typescript
+aether.registerComponent("chat.composer.actionTray", {
+  id: "my-wrapper",
+  mode: "wrap",
+  render: () =>
+    ui.column([
+      ui.text("Above the original"),
+      ui.core(),
+      ui.text("Below the original"),
+    ]),
+});
+```
+
+---
+
+## 组合节点 — 完整 surface 示例
+
+下面的示例注册一个递增持久计数器的 action，以及一个在聊天输入框上方渲染该计数器的 surface。
+
+```typescript
+import { defineAetherExtension, ui } from "@aether/extension-api";
+
+export const activateAether = defineAetherExtension((aether) => {
+  aether.registerAction("increment", ({ amount = 1 }) => {
+    const count = aether.storage.get("count", 0) + Number(amount);
+    aether.storage.set("count", count);
+    aether.invalidate();
+  });
+
+  aether.registerSurface("chat.composer.top", {
+    id: "counter-surface",
+    render: ({ is_running, storage }) =>
+      ui.card([
+        ui.row([
+          ui.text(`Count: ${storage.count ?? 0}`, { style: "title" }),
+          ui.button("+1", "increment", { args: { amount: 1 } }),
+        ]),
+        is_running
+          ? ui.text("Agent is running...", { style: "caption" })
+          : ui.progress(),
+      ]),
+  });
+});
+```
+
+<Note>
+所有 `ui.*` 工厂返回的都是普通 JavaScript 对象 — 即节点描述符。Aether 的 Android 渲染器在显示 surface 或 page 时，将这些对象解析为 Compose 组件。
+</Note>
+
+<Tip>
+Row 默认填满可用宽度，其子节点保持固有尺寸。在某个子节点上设置 `weight`，可让它扩展，同时兄弟控件保持固有尺寸。例如，在按钮上放置 `{ weight: 1 }`，会使其在固定宽度标签旁拉伸以填满剩余行空间。
+</Tip>

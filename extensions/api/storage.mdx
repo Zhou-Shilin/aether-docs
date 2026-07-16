@@ -1,10 +1,10 @@
 ---
 title: "Extension Storage: Persistent Key-Value Store for Mods"
 sidebarTitle: "Storage"
-description: "Use Aether's extension storage API to persist key-value data between sessions. Storage is private to each extension and backed by the app's filesystem."
+description: "Use Aether's extension storage API to persist namespaced key-value data between sessions in a shared backing file."
 ---
 
-Each extension gets a private persistent key-value store. Data survives hot-reloads and app restarts because Aether backs the store by `~/.aether/app-extension-state.json` inside the Alpine filesystem. No other extension can read or write your extension's storage.
+Each extension gets a persistent key-value namespace. Data survives extension reloads and app restarts because Aether stores all namespaces in `~/.aether/app-extension-state.json` inside the Alpine filesystem. Namespacing by extension ID is an API convention, not a security boundary between trusted extensions.
 
 ## API reference
 

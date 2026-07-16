@@ -4,7 +4,7 @@ sidebarTitle: "Package Format"
 description: "Learn the package.json structure for Aether extensions, including pi.extensions, aether.extensions, and aether.native fields with working examples."
 ---
 
-An Aether extension is a directory (or zip archive) containing a `package.json` that declares which entry files power which tiers. Aether reads this manifest at load time to discover entry points for the Pi agent layer, the Script Mod runtime, and the native DEX loader. Only the fields relevant to the tiers you use are required — unused tier fields are simply absent.
+An Aether extension package is a directory (or zip archive) containing a `package.json` that declares which entry files power which tiers. Aether reads this manifest at load time to discover entry points for the Pi agent layer, the Script Mod runtime, and the native DEX loader. Only the fields relevant to the tiers you use are required — unused tier fields are simply absent.
 
 ## Full package.json example
 
@@ -30,11 +30,11 @@ The example below activates all three tiers from a single package:
 
 ## Fields reference
 
-<ParamField path="name" type="string" required>
-  An npm-style package name that identifies your extension. Use lowercase letters, numbers, and hyphens (for example, `my-aether-mod` or `@myorg/chat-enhancer`). Aether uses this name in the Extensions list and when generating stable extension IDs.
+<ParamField path="name" type="string">
+  An npm-style package name that identifies your extension. Use lowercase letters, numbers, and hyphens (for example, `my-aether-mod` or `@myorg/chat-enhancer`). Aether uses this name in the Extensions list and when generating stable extension IDs; if omitted, it falls back to the package directory name.
 </ParamField>
 
-<ParamField path="version" type="string" required>
+<ParamField path="version" type="string">
   A [semver](https://semver.org/) version string (for example, `1.0.0`). Increment this value when you publish updates so Aether and package managers can track changes.
 </ParamField>
 
@@ -43,7 +43,7 @@ The example below activates all three tiers from a single package:
 </ParamField>
 
 <ParamField path="aether.extensions" type="string[]">
-  Array of paths to Aether Script Mod entry files, relative to the package root. Each file is loaded by the Aether Script Mod runtime (API v2). Export your factory as `activateAether` or `aether` to register surfaces, components, pages, actions, and event handlers. The runtime also accepts a `default` export for entries explicitly listed here (useful for packages that target only this tier). Changes to these files hot-reload without restarting the app. Omit this field if your extension does not use the Script Mod API.
+  Array of paths to Aether Script Mod entry files, relative to the package root. Each file is loaded by the Aether Script Mod runtime (API v2). Export your factory as `activateAether` or `aether` to register surfaces, components, pages, actions, and event handlers. The runtime also accepts a `default` export for entries explicitly listed here (useful for packages that target only this tier). These files reload without restarting the app when an extension reload is triggered. Omit this field if your extension does not use the Script Mod API.
 </ParamField>
 
 <ParamField path="aether.native.classpath" type="string[]">
@@ -60,7 +60,7 @@ The example below activates all three tiers from a single package:
 
 ## Script-only vs native-only packages
 
-**Script-only** packages omit the `aether.native` object entirely. This is the most common extension format and supports full hot-reload:
+**Script-only** packages omit the `aether.native` object entirely. This is the most common extension format and can reload without restarting Aether:
 
 ```json package.json
 {
@@ -89,7 +89,7 @@ The example below activates all three tiers from a single package:
 
 ## Installation location
 
-Extension packages live under `~/.aether/extensions` inside Aether's managed Alpine filesystem. When you import a zip via Settings → Extensions → Import, Aether extracts the package into a subdirectory there. npm-based packages installed through Aether's package management are also discovered from this root at load time.
+Imported extension packages live under `~/.aether/extensions` inside Aether's managed Alpine filesystem. When you import a zip via Settings → Extensions → **Import extension**, Aether extracts the package into a subdirectory there. Packages installed through Aether's package management are discovered through the Pi package manager.
 
 ## Shared Pi + Aether entry point
 

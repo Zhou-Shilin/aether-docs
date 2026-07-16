@@ -1,38 +1,38 @@
 ---
-title: "Agent Mode: Autonomous Task Execution in Aether"
+title: "Agent Mode: Android Device Automation in Aether"
 sidebarTitle: "Agent Mode"
-description: "Enable Agent Mode to let Aether autonomously execute shell commands, manage files, and complete multi-step tasks using the Alpine Linux runtime."
+description: "Enable Agent Mode to let Aether control apps on an isolated Android virtual display."
 ---
 
-Agent Mode turns Aether into a fully autonomous agent that can run shell commands, read and write files, execute scripts, and loop through as many steps as it needs until your task is complete. Instead of a single LLM response, you get a self-driving workflow that uses tools on your behalf.
+Agent Mode gives Aether an isolated Android virtual display that it can control with the `agent_display` tool. Shell commands, file tools, Skills, MCP servers, and the multi-step Pi agent loop are available without Agent Mode.
 
 ## How to Enable Agent Mode
 
-Toggle the **Agent Mode** button in the chat composer bar. When Agent Mode is active, the indicator lights up and the agent gains access to its full suite of built-in tools. Each LLM turn can now be followed by one or more tool calls before the agent replies to you.
+Complete Termux setup, then authorize Agent Mode in **Settings → Agent Mode** with Shizuku or experimental Root access. Toggle the **Agent Mode** button in the composer menu to make the virtual-display tool available in that chat.
 
-## What Agent Mode Can Do
+## What Aether Can Do
 
 <CardGroup cols={2}>
   <Card title="Shell Commands" icon="terminal">
-    Run any shell command inside the built-in Alpine Linux VM — from simple utilities to long-running scripts.
+    Run any shell command inside the built-in Alpine Linux VM — from simple utilities to long-running scripts. This does not require Agent Mode.
   </Card>
   <Card title="File Management" icon="folder-open">
-    Read and write files within the Alpine filesystem, create directories, and pipe output between tools.
+    Read and write files within the Alpine filesystem, create directories, and pipe output between tools. This does not require Agent Mode.
   </Card>
   <Card title="Code Execution" icon="code">
-    Execute Python, Node.js, shell scripts, and any other runtime you've installed in Alpine via `apk add`.
+    Execute Python, Node.js, shell scripts, and any other runtime you've installed in Alpine via `apk add`. This does not require Agent Mode.
   </Card>
   <Card title="Skills & MCP" icon="puzzle-piece">
-    Call Skills and MCP servers as additional tools — web search, custom APIs, and more.
+    Use Skills and call MCP servers for web search, custom APIs, and more. This does not require Agent Mode.
   </Card>
   <Card title="Android Automation" icon="mobile">
-    With Shizuku enabled, inject taps, swipes, and key events, capture screenshots, and control apps on virtual displays.
+    With Agent Mode enabled, inject taps, swipes, key events, and text, capture screenshots, and control apps on an isolated virtual display.
   </Card>
 </CardGroup>
 
 ## The Agentic Loop
 
-The Pi framework drives a **tool-use loop** at the core of Agent Mode:
+The Pi framework drives a **tool-use loop** at the core of every Aether conversation:
 
 1. You send a task description.
 2. The LLM decides which tool to call and with what arguments.
@@ -50,9 +50,9 @@ You don't have to let the agent run uninterrupted. At any point during generatio
 - **Steer**: Use the **Steer** input that appears mid-generation to send a follow-up instruction. The agent incorporates your message into the ongoing context without restarting the task from scratch.
 
 <Warning>
-  Agent Mode with shell access is powerful. The agent can read and modify files anywhere in the Alpine environment. Always review the plan for long or complex tasks — especially if the task involves sensitive files, network requests, or irreversible operations — before letting it run to completion.
+  Aether's tools are powerful. The agent can read and modify files in configured runtimes, and Agent Mode can control apps on an isolated Android virtual display. Always review the plan for long or complex tasks — especially if the task involves sensitive files, network requests, or irreversible operations — before letting it run to completion.
 </Warning>
 
 <Tip>
-  Start with simple, well-scoped tasks (e.g., "list the files in my home directory" or "write a Python script that prints the Fibonacci sequence") to get a feel for how the agent behaves before you hand it multi-step workflows.
+  Start with simple, well-scoped tasks (e.g., "open Settings on the isolated display and take a screenshot") to get a feel for how Agent Mode behaves before you hand it multi-step workflows.
 </Tip>

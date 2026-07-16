@@ -1,0 +1,106 @@
+---
+title: "Aether Kotlin Mods 中的 Native 操作拦截器"
+sidebarTitle: "拦截器"
+description: "注册 Kotlin 操作拦截器以观察、修改或取消 Aether 操作（如 chat.new 与 skills.selection），并完整支持通配符。"
+---
+
+Native 拦截器接入与 Script 拦截器相同的操作链，但始终先运行。它们可以在任何 Script 级处理器看到操作之前观察、修改、取消或替换操作载荷。
+
+## API
+
+在 `onLoad` 中调用 `context.intercept()`：
+
+```kotlin
+context.intercept(
+    operation: String,
+    priority: Int,
+    interceptor: AetherModOperationInterceptor
+)
+```
+
+`AetherModOperationInterceptor` 是带有一个方法的 `fun interface`：
+
+```kotlin
+suspend fun intercept(
+    payload: JSONObject,
+    context: JSONObject,
+): AetherModOperationDecision
+```
+
+| Parameter | Description |
+|---|---|
+| `operation` | 要拦截的操作名称，或 `"*"` 以拦截每一个操作。 |
+| `priority` | 在 Native 拦截器层级内，更低优先级的拦截器先运行。 |
+| `interceptor` | `AetherModOperationInterceptor`，接收当前 `payload` 与操作 `context` 对象；返回 `AetherModOperationDecision`。 |
+
+## 决策类型
+
+处理器必须返回 `AetherModOperationDecision`，告知链路下一步如何处理：
+
+| Decision | Effect |
+|---|---|
+| `AetherModOperationDecision(payload = ...)` | 使用修改后的载荷放行操作。 |
+| `AetherModOperationDecision(cancelled = true, reason = "...")` | 取消操作。后续拦截器与内置处理器都不会运行。 |
+| `AetherModOperationDecision(payload = payload)` | 以未修改的载荷放行。 |
+
+也可以使用 `context.cancelOperation()` 扩展函数作为简写：
+
+```kotlin
+return context.cancelOperation(payload, reason = "Blocked by MyNativeMod")
+```
+
+## 内置操作
+
+| Operation | Triggered by |
+|---|---|
+| `chat.new` | 新的聊天回合开始时。 |
+| `skills.selection` | 用户或扩展更改当前 skill 选择时。 |
+
+使用 `"*"` 可拦截通过 kernel 分发的每一个操作 — 适用于诊断、日志记录或统一策略执行。
+
+## 示例 — 修改 chat.new
+
+在每次新聊天回合开始前清空已选 skill ID：
+
+```kotlin
+context.intercept("chat.new", priority = 500) { payload, _ ->
+    AetherModOperationDecision(
+        payload = payload.put("selected_skill_ids", JSONArray()),
+    )
+}
+```
+
+## 示例 — 通配观察者
+
+记录每一个操作但不修改：
+
+```kotlin
+context.intercept("*", priority = 100) { payload, _ ->
+    Log.d("MyMod", "Operation: ${payload}")
+    AetherModOperationDecision(payload = payload) // pass through unchanged
+}
+```
+
+## 示例 — 取消操作
+
+阻止某个特定 skill 被取消选择：
+
+```kotlin
+context.intercept("skills.selection", priority = 500) { payload, _ ->
+    val skillId = payload.optString("skill_id")
+    val selected = payload.optBoolean("selected", true)
+    if (skillId == "locked-skill" && !selected) {
+        AetherModOperationDecision(
+            cancelled = true,
+            reason = "This skill is locked by MyNativeMod.",
+        )
+    } else {
+        AetherModOperationDecision(payload = payload)
+    }
+}
+```
+
+<Note>
+  对于同一操作与优先级，Native 拦截器先于 Script 拦截器运行。在 Native
+  层级内，拦截器按其 `priority` 值排序 — 数值越低越先运行。
+</Note>

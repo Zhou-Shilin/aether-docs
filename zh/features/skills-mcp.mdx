@@ -1,0 +1,57 @@
+---
+title: "Skills 与 MCP 服务器：扩展 Agent 工具"
+sidebarTitle: "Skills 与 MCP"
+description: "添加 Skills 与 MCP 服务器，为 Aether Agent 赋予网络搜索、代码执行或自定义 API 集成等专业能力。"
+---
+
+Skills 与 MCP（Model Context Protocol）服务器可将 Aether Agent 可用的工具与上下文扩展到内置能力之外。可以把它们看作插件模块 — Skills 提供可复用的说明与资源，而 MCP 服务器通过标准接口暴露工具、资源与提示。
+
+## Skills
+
+Skills 是以 `SKILL.md` 文件为核心的 **打包说明与资源**。一个 Skill 可包含额外的参考资料、脚本、资源与元数据，Agent 会在相关工作流中读取它们。
+
+### 安装 Skills
+
+在 Aether 的 **Agent Skills** 页面安装 Skills。有三种方式：
+
+- **文件夹导入** — 选择包含 `SKILL.md` 的本地文件夹。
+- **Zip 导入** — 选择包含 `SKILL.md` 的 `.zip` 包。
+- **远程 URL** — 输入 GitHub 仓库/树 URL 或直接的 `.zip` 链接。
+
+### 按聊天选择 Skills
+
+打开输入栏下方操作区中的 **Skill 选择器**。每个已安装 Skill 显示为开关。启用当前对话要用的 Skills，然后发送消息。
+
+你选择的 Skills **仅作用于当前聊天**，除非你将其保存为默认。
+
+### 设置默认 Skills
+
+内置 Skill 选择器仅更改当前聊天。新聊天的默认 Skills 可通过扩展状态或 `skills` 服务 API 管理，包括使用 **Global Skills Mod** 示例。你仍可按聊天覆盖默认值。
+
+## MCP 服务器
+
+MCP（Model Context Protocol）服务器通过 Aether 原生支持的 **标准接口** 暴露工具。因此任何符合规范的 MCP 服务器 — 无论自建还是社区提供 — 都能立刻为 Agent 提供新能力。
+
+### 支持的传输方式
+
+| 传输 | 适用场景 |
+|---|---|
+| **StdIo** | 同设备上的本地进程（例如在 Termux 或 Alpine 中运行的脚本） |
+| **StreamableHttp** | 可通过 HTTP 访问的远程服务器 — 适合托管 API 与云服务 |
+
+### 添加 MCP 服务器
+
+1. 进入 **设置 → MCP 服务器**。
+2. 点击 **添加 MCP 服务器**。
+3. 输入服务器名称、传输类型，以及命令（StdIo）或 URL（StreamableHttp）。
+4. 点击 **保存**。
+
+添加并启用后，在聊天操作托盘中选择该 MCP 服务器。其工具、资源与提示无需 Agent 模式即可使用。无需重启。
+
+## 管理默认 Skills
+
+使用输入栏中的 **Skill 选择器** 按聊天启用或禁用各个 Skills。打开新聊天时会自动应用任何已配置的默认选择。更改默认值不会影响已有对话。
+
+<Note>
+  扩展开发文档中的 **Global Skills Mod** 示例展示了如何构建以编程方式管理全局 Skill 默认值的扩展。若你想在 Aether 内打造自定义 Skill 管理体验，这是很好的起点。
+</Note>

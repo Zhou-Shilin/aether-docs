@@ -33,17 +33,17 @@ readonly state: {
 
 ## state.get
 
-Read the full public state object, or pass a path string to read a specific field:
+Read the full public state object, or pass a path string to read a specific field. The resolved value is returned in the response's `value` field:
 
 ```typescript
-const state = await aether.state.get();
+const { value: state } = await aether.state.get();
 console.log(state.selected_model_key);
 
 // Or read a specific path
-const draft = await aether.state.get("draft_input");
+const { value: draft } = await aether.state.get("draft_input");
 ```
 
-Calling `state.get()` with no argument returns the entire public state snapshot as an object. Passing a path string returns only the value at that path.
+Calling `state.get()` with no argument returns the entire public state snapshot in `value`. Passing a path string returns the value at that path in `value`.
 
 ## state.patch
 
@@ -55,7 +55,7 @@ await aether.state.patch("draft_input", "Review the current changes.");
 
 ## state.transaction
 
-Apply multiple state changes atomically. Operations are applied in array order:
+Apply multiple state changes in one request. Operations are applied in array order:
 
 ```typescript
 await aether.state.transaction([
@@ -64,7 +64,7 @@ await aether.state.transaction([
 ]);
 ```
 
-Each operation defaults to `op: "set"` when `op` is omitted. Pass `op: "remove"` to clear a path:
+Each operation defaults to `op: "set"` when `op` is omitted. Pass `op: "remove"` to clear a supported path. `selected_model_key` and `screen` require valid replacement values and cannot be removed:
 
 ```typescript
 await aether.state.transaction([
@@ -77,5 +77,5 @@ await aether.state.transaction([
 </Note>
 
 <Tip>
-  Prefer `state.transaction` over multiple `state.patch` calls when you need to update several paths at once. Batching changes into a single transaction avoids intermediate re-renders between writes and keeps related state updates consistent from Aether's perspective.
+  Prefer `state.transaction` over multiple `state.patch` calls when you need to update several paths at once. Batching changes keeps related state updates in a single host request.
 </Tip>
