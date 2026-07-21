@@ -58,7 +58,7 @@ Aether.postMessage(JSON.stringify({
 ## 完整示例 — 带 action 桥接的 WebView
 
 ```typescript index.ts
-import { defineAetherExtension, ui } from "@aether/extension-api";
+import { defineAetherExtension, ui } from "@baimoqilin/aether-extension-api";
 
 export const activateAether = defineAetherExtension((aether) => {
   aether.registerAction("web-clicked", ({ source }) => {

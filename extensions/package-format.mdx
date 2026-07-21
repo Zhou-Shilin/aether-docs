@@ -18,8 +18,16 @@ The example below activates all three tiers from a single package:
     "extensions": ["./agent.ts"]
   },
   "aether": {
+    "api": {
+      "min": 2,
+      "max": 2
+    },
     "extensions": ["./android.ts"],
     "native": {
+      "api": {
+        "min": 1,
+        "max": 1
+      },
       "classpath": ["./native/mod.dex"],
       "libraryPath": ["./native/lib"],
       "entrypoints": ["com.example.aether.MyNativeMod"]
@@ -46,6 +54,14 @@ The example below activates all three tiers from a single package:
   Array of paths to Aether Script Mod entry files, relative to the package root. Each file is loaded by the Aether Script Mod runtime (API v2). Export your factory as `activateAether` or `aether` to register surfaces, components, pages, actions, and event handlers. The runtime also accepts a `default` export for entries explicitly listed here (useful for packages that target only this tier). These files reload without restarting the app when an extension reload is triggered. Omit this field if your extension does not use the Script Mod API.
 </ParamField>
 
+<ParamField path="aether.api" type="number | object">
+  Script API compatibility. Use the exact integer `2`, or an object such as `{ "min": 2, "max": 2, "allowNewer": false }`. Missing declarations remain compatible for legacy packages. An incompatible or malformed declaration rejects the reload and keeps the previous working Script runtime active.
+</ParamField>
+
+<ParamField path="aether.native.api" type="number | object">
+  Native API compatibility. The current Native API version is `1`. Use an exact integer or the same `min`, `max`, and optional `allowNewer` range format as `aether.api`.
+</ParamField>
+
 <ParamField path="aether.native.classpath" type="string[]">
   Array of paths to `.dex`, `.apk`, or jar/zip files that contain a compiled `classes.dex`, relative to the package root. Aether passes these paths to `DexClassLoader` at process startup. A plain JVM `.class` jar is not sufficient — run Android D8/R8 on your compiled output first. Omit the entire `aether.native` object if your extension does not include a Native Mod.
 </ParamField>
@@ -67,6 +83,7 @@ The example below activates all three tiers from a single package:
   "name": "my-script-mod",
   "version": "1.0.0",
   "aether": {
+    "api": 2,
     "extensions": ["./index.ts"]
   }
 }
@@ -80,6 +97,7 @@ The example below activates all three tiers from a single package:
   "version": "1.0.0",
   "aether": {
     "native": {
+      "api": 1,
       "classpath": ["./build/mod.dex"],
       "entrypoints": ["com.example.aether.MyNativeMod"]
     }
@@ -89,7 +107,7 @@ The example below activates all three tiers from a single package:
 
 ## Installation location
 
-Imported extension packages live under `~/.aether/extensions` inside Aether's managed Alpine filesystem. When you import a zip via Settings → Extensions → **Import extension**, Aether extracts the package into a subdirectory there. Packages installed through Aether's package management are discovered through the Pi package manager.
+Imported extension packages live under `~/.aether/extensions` inside Aether's managed Alpine filesystem. When you import a zip via Settings → Extensions → **Import extension**, Aether stages the package before replacing an existing copy. A bundled `node_modules` directory is used as-is. Otherwise, packages with runtime dependencies use `npm ci --omit=dev` when a lockfile is present and `npm install --omit=dev` when it is not. Dependency or reload failures restore the previous package. Packages installed through Aether's package management are discovered through the Pi package manager.
 
 ## Shared Pi + Aether entry point
 
@@ -97,7 +115,7 @@ When you share a single entry file between `pi.extensions` and `aether.extension
 
 ```typescript index.ts
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { defineAetherExtension, ui } from "@aether/extension-api";
+import { defineAetherExtension, ui } from "@baimoqilin/aether-extension-api";
 
 export default function activatePi(pi: ExtensionAPI) {
   pi.registerCommand("hello", {
@@ -118,5 +136,5 @@ export const activateAether = defineAetherExtension((aether) => {
 ```
 
 <Note>
-  The `defineAetherExtension` helper provides TypeScript types for the `aether` argument and is a no-op at runtime — it simply returns the factory function you pass in. Import it from `@aether/extension-api`.
+  The `defineAetherExtension` helper provides TypeScript types for the `aether` argument and is a no-op at runtime — it simply returns the factory function you pass in. Import it from `@baimoqilin/aether-extension-api`.
 </Note>

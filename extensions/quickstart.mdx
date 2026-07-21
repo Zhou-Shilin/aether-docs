@@ -23,19 +23,23 @@ This guide walks you through creating a minimal extension that adds a button abo
       "name": "my-first-extension",
       "version": "1.0.0",
       "aether": {
+        "api": 2,
         "extensions": ["./index.ts"]
+      },
+      "devDependencies": {
+        "@baimoqilin/aether-extension-api": "^2.0.0"
       }
     }
     ```
 
-    The `aether.extensions` array tells Aether which files to load as Script Mods. You can list multiple entry files if needed, but one is enough here.
+    The `aether.extensions` array tells Aether which files to load as Script Mods. The API declaration rejects incompatible runtimes, and the types-only development dependency provides editor completion. Run `npm install` before editing.
   </Step>
 
   <Step title="Create the extension entry file">
     Create `index.ts` with a surface registration and an action handler:
 
     ```typescript index.ts
-    import { defineAetherExtension, ui } from "@aether/extension-api";
+    import { defineAetherExtension, ui } from "@baimoqilin/aether-extension-api";
 
     export const activateAether = defineAetherExtension((aether) => {
       // Register an action handler
@@ -59,7 +63,7 @@ This guide walks you through creating a minimal extension that adds a button abo
     Package the directory as a zip archive:
 
     ```bash
-    zip -r my-first-extension.zip .
+    zip -r my-first-extension.zip . -x "node_modules/*"
     ```
 
     The zip may contain the package at the archive root or inside exactly one top-level package directory.

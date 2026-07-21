@@ -25,9 +25,16 @@ The `package.json` registers a single entry point under `aether.extensions`. The
   "version": "1.0.0",
   "description": "Minecraft-style replacement of Aether's native skill tray with persistent global defaults.",
   "aether": {
+    "api": {
+      "min": 2,
+      "max": 2
+    },
     "extensions": [
       "./index.ts"
     ]
+  },
+  "devDependencies": {
+    "@baimoqilin/aether-extension-api": "^2.0.0"
   }
 }
 ```
@@ -40,7 +47,7 @@ The `package.json` registers a single entry point under `aether.extensions`. The
 import {
   defineAetherExtension,
   ui,
-} from "@aether/extension-api";
+} from "@baimoqilin/aether-extension-api";
 
 type Skill = {
   id: string;

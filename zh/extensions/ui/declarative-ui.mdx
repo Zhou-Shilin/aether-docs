@@ -9,7 +9,7 @@ Aether 的 `ui` 工厂提供一组声明式节点类型，会在 surface、compo
 ## 导入
 
 ```typescript
-import { ui } from "@aether/extension-api";
+import { ui } from "@baimoqilin/aether-extension-api";
 ```
 
 你也可以直接从传入扩展工厂的 `aether` 参数上访问 `ui`：
@@ -265,7 +265,7 @@ aether.registerComponent("chat.composer.actionTray", {
 下面的示例注册一个递增持久计数器的 action，以及一个在聊天输入框上方渲染该计数器的 surface。
 
 ```typescript
-import { defineAetherExtension, ui } from "@aether/extension-api";
+import { defineAetherExtension, ui } from "@baimoqilin/aether-extension-api";
 
 export const activateAether = defineAetherExtension((aether) => {
   aether.registerAction("increment", ({ amount = 1 }) => {

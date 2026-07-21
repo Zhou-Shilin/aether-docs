@@ -30,12 +30,12 @@ A single `package.json` can declare all three tiers at once. The `pi.extensions`
 
 Imported extension packages live under `~/.aether/extensions` inside Aether's managed Alpine filesystem. You can install an extension in two ways:
 
-- **Import a zip**: open Settings → Extensions, tap **Import extension**, and select the zip file. Aether extracts the package into `~/.aether/extensions` and loads it immediately.
-- **npm packages**: add the package through Aether's package management interface and declare `aether.extensions` entries in its `package.json`. Aether discovers and loads it alongside locally installed extensions.
+- **Import a zip**: open Settings → Extensions, tap **Import extension**, and select the zip file. Aether installs runtime npm dependencies when needed, then replaces the installed copy and loads it immediately. A failed install or reload restores the previous copy.
+- **npm packages**: add the package through Aether's package management interface and declare `aether.extensions` or `aether.native` entries in its `package.json`. Aether discovers Script and Native entrypoints alongside locally installed extensions.
 
 ## Hot reload
 
-Script Mods and Pi extensions reload without restarting Aether when an extension reload is triggered. Entry files are not watched for changes automatically. The extension runtime re-imports the updated file, calls your factory function again, and triggers a UI refresh. Native Mods are discovered and loaded only during app process startup; installing, updating, removing, or changing a Native Mod requires restarting Aether.
+Script Mod entry directories are watched automatically. Reloads are serialized and atomic: Aether loads every new Script factory before replacing the active runtime. If loading fails, the previous working runtime remains active and the error appears in **Settings → Extensions**. Native Mods are discovered and loaded only during app process startup; installing, updating, removing, or changing a Native Mod requires restarting Aether.
 
 ## Explore further
 

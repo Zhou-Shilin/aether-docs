@@ -27,7 +27,7 @@ interface AetherNativeMod {
 }
 ```
 
-`onLoad` is called once when the mod is loaded at process startup. The interface defines `onUnload`, but the current Native Mod manager does not invoke it.
+`onLoad` is called once when the mod is loaded at process startup. When Aether explicitly shuts down the Native Mod manager, it calls `onUnload` in reverse load order and removes registrations owned by the mod. Abrupt process termination cannot run unload callbacks.
 
 ## AetherNativeModContext
 
@@ -64,6 +64,7 @@ Declare your DEX artifact, optional native library directories, and entry class 
   "version": "1.0.0",
   "aether": {
     "native": {
+      "api": 1,
       "classpath": ["./native/mod.dex"],
       "libraryPath": ["./native/lib"],
       "entrypoints": ["com.example.aether.MyNativeMod"]
@@ -72,6 +73,7 @@ Declare your DEX artifact, optional native library directories, and entry class 
 }
 ```
 
+- **`api`** — Native API compatibility. The current version is `1`; version ranges are also accepted.
 - **`classpath`** — one or more `.dex`, `.apk`, or DEX-containing zip/jar paths relative to the package root.
 - **`libraryPath`** — optional directories containing `.so` native libraries.
 - **`entrypoints`** — fully-qualified class names that implement `AetherNativeMod`. Multiple entrypoints in one package are all loaded.

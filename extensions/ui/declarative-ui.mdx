@@ -9,7 +9,7 @@ Aether's `ui` factory provides a set of declarative node types that render as na
 ## Import
 
 ```typescript
-import { ui } from "@aether/extension-api";
+import { ui } from "@baimoqilin/aether-extension-api";
 ```
 
 You can also access `ui` directly from the `aether` parameter passed to your extension factory:
@@ -265,7 +265,7 @@ aether.registerComponent("chat.composer.actionTray", {
 The example below registers an action that increments a persistent counter and a surface that renders it above the chat composer.
 
 ```typescript
-import { defineAetherExtension, ui } from "@aether/extension-api";
+import { defineAetherExtension, ui } from "@baimoqilin/aether-extension-api";
 
 export const activateAether = defineAetherExtension((aether) => {
   aether.registerAction("increment", ({ amount = 1 }) => {
